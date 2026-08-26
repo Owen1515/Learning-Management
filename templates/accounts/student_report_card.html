@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Report Card - {{ student.first_name }} {{ student.last_name }}</title>
+<style>
+:root{--primary:{% if school %}{{ school.primary_color }}{% else %}#1f4e78{% endif %};--secondary:{% if school %}{{ school.secondary_color }}{% else %}#198754{% endif %}}
+*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;background:#eef1f4;color:#17202a}.actions{width:950px;max-width:92%;margin:20px auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.button{padding:11px 18px;border:0;border-radius:6px;text-decoration:none;cursor:pointer;font-weight:700}.back{background:var(--primary);color:#fff}.print{background:var(--secondary);color:#fff}.term-selector{padding:10px;border:1px solid #aaa;border-radius:6px}.page{width:950px;max-width:92%;margin:25px auto;background:#fff;padding:40px;box-shadow:0 2px 12px #0002}.school-header{text-align:center;border-bottom:3px solid var(--primary);padding-bottom:22px;margin-bottom:28px}.school-logo{max-height:100px;max-width:140px}.school-header h1{margin:8px 0 3px}.motto{font-style:italic;margin-bottom:8px}.contact{line-height:1.5;font-size:14px}.report-title{font-size:23px;font-weight:700;margin-top:18px}.student-info{display:grid;grid-template-columns:1fr 1fr;gap:12px 40px;margin-bottom:30px}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border:1px solid #bbb;padding:11px}th{background:#eef1f4;text-align:left}.center{text-align:center}.overall{margin-top:22px;padding:18px;background:#f5f7fa;border-left:5px solid var(--primary);display:flex;justify-content:space-between;gap:20px;font-size:18px}.section{margin-top:30px}.comment{border:1px solid #bbb;min-height:65px;padding:12px;margin:7px 0 18px}.signature-area{display:flex;justify-content:space-between;margin-top:65px}.signature{width:40%;border-top:1px solid #333;padding-top:8px;text-align:center}.signature-name{font-weight:700}.empty{text-align:center;color:#777}@media(max-width:650px){.student-info{grid-template-columns:1fr}.overall,.signature-area{display:block}.signature{width:100%;margin-top:45px}}@media print{body{background:#fff}.actions{display:none}.page{width:auto;max-width:none;margin:0;box-shadow:none;padding:20px}}
+</style>
+</head>
+<body>
+<div class="actions">
+<a class="button back" href="{% url 'accounts:student_dashboard' %}">← Back to Dashboard</a>
+<form method="get"><select name="term" class="term-selector" onchange="this.form.submit()">{% for term in terms %}<option value="{{ term.id }}" {% if selected_term and term.id == selected_term.id %}selected{% endif %}>{{ term.get_number_display }}</option>{% endfor %}</select></form>
+<button class="button print" onclick="window.print()">Print Report Card</button>
+</div>
+<div class="page">
+<div class="school-header">
+{% if school and school.logo %}<img class="school-logo" src="{{ school.logo.url }}" alt="{{ school.school_name }} logo">{% endif %}
+<h1>{% if school %}{{ school.school_name }}{% else %}School Name{% endif %}</h1>
+{% if school and school.motto %}<div class="motto">“{{ school.motto }}”</div>{% endif %}
+{% if school %}<div class="contact">{% if school.address %}{{ school.address }}<br>{% endif %}{% if school.telephone %}Tel: {{ school.telephone }}{% endif %}{% if school.email %} &nbsp; | &nbsp; {{ school.email }}{% endif %}</div>{% endif %}
+<div class="report-title">Student Academic Report Card</div>
+{% if selected_term %}<p><strong>{{ selected_term.get_number_display }} — {{ enrollment.school_year.name }}</strong></p>{% endif %}
+</div>
+<div class="student-info"><div><strong>Student:</strong> {{ student.first_name }} {{ student.last_name }}</div><div><strong>Student Number:</strong> {{ student.student_number }}</div>{% if enrollment %}<div><strong>Class:</strong> {{ enrollment.classroom.name }}</div><div><strong>School Year:</strong> {{ enrollment.school_year.name }}</div>{% endif %}</div>
+<h2>Academic Results</h2>
+<table><thead><tr><th>Subject</th><th>Average</th><th>Grade</th></tr></thead><tbody>{% for summary in subject_summaries %}<tr><td>{{ summary.subject.name }}</td><td>{% if summary.average is not None %}{{ summary.average|floatformat:2 }}%{% else %}-{% endif %}</td><td class="center"><strong>{{ summary.letter_grade }}</strong></td></tr>{% empty %}<tr><td colspan="3" class="empty">No published results for this term.</td></tr>{% endfor %}</tbody></table>
+<div class="overall"><div><strong>Overall Term Average:</strong> {% if overall_average is not None %}{{ overall_average|floatformat:2 }}%{% else %}-{% endif %}</div><div><strong>Overall Grade:</strong> {{ overall_grade }}</div></div>
+<div class="section"><h2>Attendance</h2><table><thead><tr><th>Days School Open</th><th>Days Present</th><th>Days Absent</th><th>Times Late</th></tr></thead><tbody><tr><td>{% if term_report %}{{ term_report.days_school_open }}{% else %}-{% endif %}</td><td>{% if term_report %}{{ term_report.days_present }}{% else %}-{% endif %}</td><td>{% if term_report %}{{ term_report.days_absent }}{% else %}-{% endif %}</td><td>{% if term_report %}{{ term_report.times_late }}{% else %}-{% endif %}</td></tr></tbody></table></div>
+<div class="section"><h2>Comments</h2><strong>Form Teacher's Comment</strong><div class="comment">{% if term_report and term_report.form_teacher_comment %}{{ term_report.form_teacher_comment }}{% else %}No comment entered.{% endif %}</div><strong>Principal's Comment</strong><div class="comment">{% if term_report and term_report.principal_comment %}{{ term_report.principal_comment }}{% else %}No comment entered.{% endif %}</div><p><strong>Promotion Status:</strong> {% if term_report %}{{ term_report.get_promotion_status_display }}{% else %}Pending{% endif %}</p></div>
+<div class="signature-area"><div class="signature">{% if enrollment and enrollment.classroom.form_teacher %}<div class="signature-name">{{ enrollment.classroom.form_teacher.first_name }} {{ enrollment.classroom.form_teacher.last_name }}</div>{% endif %}Form Teacher</div><div class="signature">{% if school and school.principal_name %}<div class="signature-name">{{ school.principal_name }}</div>{% endif %}Principal</div></div>
+</div>
+</body></html>

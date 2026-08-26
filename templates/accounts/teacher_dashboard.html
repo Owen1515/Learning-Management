@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+        }
+
+        .header {
+            background: #1f4e78;
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            margin: 30px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 14px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #f0f2f5;
+        }
+
+        a {
+            color: inherit;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+    <div>
+        <strong>School Portal</strong>
+    </div>
+
+    <div>
+        {{ teacher.first_name }} {{ teacher.last_name }}
+        |
+        <a href="{% url 'accounts:logout' %}">
+            Logout
+        </a>
+    </div>
+
+</div>
+
+<div class="container">
+
+    <div class="card">
+
+        <h2>
+            Welcome, {{ teacher.first_name }} {{ teacher.last_name }}
+        </h2>
+
+        <p>
+            Employee Number: {{ teacher.employee_number }}
+        </p>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2>My Classes</h2>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Class</th>
+                    <th>Subject</th>
+                    <th>School Year</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for assignment in assignments %}
+<tr>
+    <td>
+        <a href="{% url 'accounts:teacher_class_detail' assignment.id %}">
+            {{ assignment.classroom.name }}
+        </a>
+    </td>
+
+    <td>
+        <a href="{% url 'accounts:teacher_class_detail' assignment.id %}">
+            {{ assignment.subject.name }}
+        </a>
+    </td>
+
+    <td>
+        {{ assignment.school_year.name }}
+    </td>
+</tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="3">
+                            No teaching assignments found.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+.air-datepicker-nav--title {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.air-datepicker-nav--title:hover {
+    background-color: rgba(128, 128, 128, 0.12);
+}
+
+.air-datepicker {
+    width: 300px;
+}
+
+.air-datepicker-body--cells.-months- {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.air-datepicker-body--cells.-years- {
+    grid-template-columns: repeat(4, 1fr);
+}

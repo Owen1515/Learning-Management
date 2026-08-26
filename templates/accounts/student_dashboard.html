@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>Student Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+        }
+
+        .header {
+            background: #1f4e78;
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header a {
+            color: white;
+        }
+
+        .container {
+            width: 90%;
+            margin: 30px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 13px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #eef1f4;
+        }
+
+        .score,
+        .percentage,
+        .average,
+        .letter {
+            font-weight: bold;
+        }
+
+        .letter {
+            font-size: 18px;
+        }
+
+        .empty {
+            color: #777;
+        }
+
+        .report-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 20px;
+            background: #198754;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .report-button:hover {
+            background: #146c43;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+    <strong>Student Portal</strong>
+
+    <div>
+        {{ student.first_name }}
+        {{ student.last_name }}
+
+        |
+
+        <a href="{% url 'accounts:logout' %}">
+            Logout
+        </a>
+    </div>
+
+</div>
+
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>
+            Welcome,
+            {{ student.first_name }}
+            {{ student.last_name }}
+        </h1>
+
+        <p>
+            <strong>Student Number:</strong>
+            {{ student.student_number }}
+        </p>
+
+        {% if enrollment %}
+
+            <p>
+                <strong>Class:</strong>
+                {{ enrollment.classroom.name }}
+            </p>
+
+            <p>
+                <strong>School Year:</strong>
+                {{ enrollment.school_year.name }}
+            </p>
+
+        {% else %}
+
+            <p>
+                <strong>Class:</strong>
+                No active enrollment found.
+            </p>
+
+        {% endif %}
+
+
+        <a
+            class="report-button"
+            href="{% url 'accounts:student_report_card' %}"
+        >
+            View Report Card
+        </a>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2>Term Summary</h2>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Term</th>
+                    <th>Weighted Average</th>
+                    <th>Letter Grade</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for summary in subject_summaries %}
+
+                    <tr>
+
+                        <td>
+                            {{ summary.subject.name }}
+                        </td>
+
+                        <td>
+                            {{ summary.term.get_number_display }}
+                        </td>
+
+                        <td class="average">
+
+                            {% if summary.average is not None %}
+
+                                {{ summary.average|floatformat:2 }}%
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                        </td>
+
+                        <td class="letter">
+                            {{ summary.letter_grade }}
+                        </td>
+
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="4" class="empty">
+                            No published term averages are available yet.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2>My Published Grades</h2>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Assessment</th>
+                    <th>Type</th>
+                    <th>Term</th>
+                    <th>Weight</th>
+                    <th>Score</th>
+                    <th>Percentage</th>
+                    <th>Grade</th>
+                    <th>Comment</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for row in grade_rows %}
+
+                    <tr>
+
+                        <td>
+                            {{ row.subject.name }}
+                        </td>
+
+                        <td>
+                            {{ row.assessment.title }}
+                        </td>
+
+                        <td>
+                            {{ row.assessment.get_assessment_type_display }}
+                        </td>
+
+                        <td>
+                            {{ row.assessment.term.get_number_display }}
+                        </td>
+
+                        <td>
+                            {{ row.assessment.weight }}%
+                        </td>
+
+                        <td class="score">
+                            {{ row.grade.score }}
+                            /
+                            {{ row.assessment.maximum_score }}
+                        </td>
+
+                        <td class="percentage">
+                            {{ row.grade.percentage|floatformat:2 }}%
+                        </td>
+
+                        <td class="letter">
+                            {{ row.letter_grade }}
+                        </td>
+
+                        <td>
+
+                            {% if row.grade.comment %}
+
+                                {{ row.grade.comment }}
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="9" class="empty">
+                            No published grades are available yet.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

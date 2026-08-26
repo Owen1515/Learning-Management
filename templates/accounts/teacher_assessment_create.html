@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>
+        Create Assessment
+    </title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f7fa;
+        }
+
+        .header {
+            background: #1f4e78;
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .header a {
+            color: white;
+        }
+
+        .container {
+            width: 700px;
+            max-width: 90%;
+            margin: 35px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #1f4e78;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            margin-top: 25px;
+            padding: 12px 24px;
+            background: #198754;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #146c43;
+        }
+
+        .message {
+            background: #ffe5e5;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+        }
+
+        .help {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+
+<div class="header">
+
+    <strong>
+        School Portal
+    </strong>
+
+    <div>
+
+        {{ teacher.first_name }}
+        {{ teacher.last_name }}
+
+        |
+
+        <a href="{% url 'accounts:logout' %}">
+            Logout
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="container">
+
+    <a
+        class="back-link"
+        href="{% url 'accounts:teacher_class_detail' assignment.id %}"
+    >
+        ← Back to {{ assignment.classroom.name }}
+        {{ assignment.subject.name }}
+    </a>
+
+
+    <div class="card">
+
+        <h1>
+            Create Assessment
+        </h1>
+
+        <p>
+            <strong>Class:</strong>
+            {{ assignment.classroom.name }}
+        </p>
+
+        <p>
+            <strong>Subject:</strong>
+            {{ assignment.subject.name }}
+        </p>
+
+
+        {% for message in messages %}
+
+            <div class="message">
+                {{ message }}
+            </div>
+
+        {% endfor %}
+
+
+        <form method="post">
+
+            {% csrf_token %}
+
+
+            <label>
+                Assessment Title
+            </label>
+
+            <input
+                type="text"
+                name="title"
+                placeholder="Example: Mathematics Test 2"
+                required
+            >
+
+
+            <label>
+                Assessment Type
+            </label>
+
+            <select
+                name="assessment_type"
+                required
+            >
+
+                <option value="">
+                    Select assessment type
+                </option>
+
+                {% for value, label in assessment_types %}
+
+                    <option value="{{ value }}">
+                        {{ label }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+
+            <label>
+                Term
+            </label>
+
+            <select
+                name="term"
+                required
+            >
+
+                <option value="">
+                    Select term
+                </option>
+
+                {% for term in terms %}
+
+                    <option value="{{ term.id }}">
+                        {{ term.get_number_display }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+
+            <label>
+                Maximum Score
+            </label>
+
+            <input
+                type="number"
+                name="maximum_score"
+                min="0.01"
+                step="0.01"
+                value="100"
+                required
+            >
+
+
+            <label>
+                Weight
+            </label>
+
+            <input
+                type="number"
+                name="weight"
+                min="0"
+                max="100"
+                step="0.01"
+                placeholder="Example: 20"
+                required
+            >
+
+            <div class="help">
+                Enter 20 if this assessment is worth 20% of the term grade.
+            </div>
+
+
+            <label>
+                Assessment Date
+            </label>
+
+            <input
+                type="date"
+                name="assessment_date"
+                required
+            >
+
+
+            <button type="submit">
+                Create Assessment
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
