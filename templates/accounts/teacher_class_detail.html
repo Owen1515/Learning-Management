@@ -1,468 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "accounts/portal_base.html" %}
+{% load static %}
+{% block title %}{{ assignment.classroom.name }} — {{ assignment.subject.name }} | Teacher Portal{% endblock %}
+{% block portal_type %}TEACHER PORTAL{% endblock %}
+{% block sidebar_role %}Teacher{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
+{% block sidebar_nav %}
+<li><a href="{% url 'accounts:teacher_dashboard' %}" class="active">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  <span class="sb-label">Dashboard</span>
+</a></li>
+<li><a href="{% url 'library:teacher_library' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  <span class="sb-label">Library Manager</span>
+</a></li>
+<li><a href="{% url 'library:marking_scheme_generator' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/></svg>
+  <span class="sb-label">AI Mark Scheme</span>
+</a></li>
+{% endblock %}
 
-    <title>
-        {{ assignment.classroom.name }}
-        -
-        {{ assignment.subject.name }}
-    </title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f7fa;
-            margin: 0;
-        }
-
-        .header {
-            background: #1f4e78;
-            color: white;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header a {
-            color: white;
-        }
-
-        .container {
-            width: 90%;
-            margin: 30px auto;
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            text-decoration: none;
-            color: #1f4e78;
-            font-weight: bold;
-        }
-
-        .top-actions {
-            margin-bottom: 20px;
-        }
-
-        .create-button {
-            display: inline-block;
-            background: #198754;
-            color: white;
-            padding: 11px 18px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .create-button:hover {
-            background: #146c43;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 13px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-            vertical-align: middle;
-        }
-
-        th {
-            background: #eef1f4;
-        }
-
-        .score {
-            font-weight: bold;
-        }
-
-        .no-grade {
-            color: #888;
-        }
-
-        .published {
-            color: green;
-            font-weight: bold;
-        }
-
-        .draft {
-            color: #b36b00;
-            font-weight: bold;
-        }
-
-        .grade-button {
-            display: inline-block;
-            background: #1f4e78;
-            color: white;
-            padding: 9px 14px;
-            border-radius: 5px;
-            text-decoration: none;
-            margin-right: 8px;
-            margin-bottom: 5px;
-        }
-
-        .grade-button:hover {
-            background: #163a5a;
-        }
-
-        .publish-button {
-            background: #198754;
-            color: white;
-            border: none;
-            padding: 9px 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .publish-button:hover {
-            background: #146c43;
-        }
-
-        .unpublish-button {
-            background: #b36b00;
-            color: white;
-            border: none;
-            padding: 9px 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .unpublish-button:hover {
-            background: #8a5200;
-        }
-
-        .publish-form {
-            display: inline-block;
-            margin: 0;
-        }
-
-        .message {
-            background: #e8f5e9;
-            padding: 12px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="header">
-
-    <strong>
-        School Portal
-    </strong>
-
-    <div>
-        {{ teacher.first_name }}
-        {{ teacher.last_name }}
-
-        |
-
-        <a href="{% url 'accounts:logout' %}">
-            Logout
-        </a>
-    </div>
-
+{% block content %}
+<div class="p-page-header">
+  <a href="{% url 'accounts:teacher_dashboard' %}" class="p-btn p-btn-outline p-btn-sm" style="margin-bottom:14px;">← Dashboard</a>
+  <div class="p-eyebrow">{{ assignment.school_year.name }}</div>
+  <h1>{{ assignment.classroom.name }} — {{ assignment.subject.name }}</h1>
+  <p>{{ students|length }} student{{ students|length|pluralize }} enrolled</p>
 </div>
 
-
-<div class="container">
-
-    <a
-        class="back-link"
-        href="{% url 'accounts:teacher_dashboard' %}"
-    >
-        ← Back to Dashboard
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="p-stat">
+      <div class="p-stat-icon navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+      <div><div class="p-stat-val">{{ students|length }}</div><div class="p-stat-label">Students</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="p-stat">
+      <div class="p-stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+      <div><div class="p-stat-val">{{ assessments|length }}</div><div class="p-stat-label">Assessments</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="p-stat">
+      <div class="p-stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></div>
+      <div><div class="p-stat-val">{{ assessments|length }}</div><div class="p-stat-label">Published</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'accounts:teacher_create_assessment' assignment.id %}" style="text-decoration:none;height:100%;display:block;">
+      <div class="p-stat" style="height:100%;cursor:pointer;border:2px dashed #d4a843;background:var(--gold-pale);">
+        <div class="p-stat-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        <div><div style="font-weight:700;color:#92660a;font-size:13px;">New Assessment</div><div class="p-stat-label">Create one</div></div>
+      </div>
     </a>
-
-
-    {% for message in messages %}
-
-        <div class="message">
-            {{ message }}
-        </div>
-
-    {% endfor %}
-
-
-    <div class="card">
-
-        <h1>
-            {{ assignment.classroom.name }}
-            -
-            {{ assignment.subject.name }}
-        </h1>
-
-        <p>
-            <strong>Teacher:</strong>
-            {{ teacher.first_name }}
-            {{ teacher.last_name }}
-        </p>
-
-        <p>
-            <strong>School Year:</strong>
-            {{ assignment.school_year.name }}
-        </p>
-
-    </div>
-
-
-    <div class="card">
-
-        <div class="top-actions">
-
-            <a
-                class="create-button"
-                href="{% url 'accounts:teacher_create_assessment' assignment.id %}"
-            >
-                + Create Assessment
-            </a>
-
-        </div>
-
-        <h2>
-            Assessments
-        </h2>
-
-        <table>
-
-            <thead>
-
-                <tr>
-                    <th>Assessment</th>
-                    <th>Type</th>
-                    <th>Term</th>
-                    <th>Maximum</th>
-                    <th>Weight</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-
-            </thead>
-
-
-            <tbody>
-
-                {% for assessment in assessments %}
-
-                    <tr>
-
-                        <td>
-                            {{ assessment.title }}
-                        </td>
-
-                        <td>
-                            {{ assessment.get_assessment_type_display }}
-                        </td>
-
-                        <td>
-                            {{ assessment.term.get_number_display }}
-                        </td>
-
-                        <td>
-                            {{ assessment.maximum_score }}
-                        </td>
-
-                        <td>
-                            {{ assessment.weight }}%
-                        </td>
-
-                        <td>
-
-                            {% if assessment.is_published %}
-
-                                <span class="published">
-                                    Published
-                                </span>
-
-                            {% else %}
-
-                                <span class="draft">
-                                    Draft
-                                </span>
-
-                            {% endif %}
-
-                        </td>
-
-                        <td>
-
-                            <a
-                                class="grade-button"
-                                href="{% url 'accounts:teacher_grade_entry' assessment.id %}"
-                            >
-                                Enter / Edit Grades
-                            </a>
-
-
-                            <form
-                                class="publish-form"
-                                method="post"
-                                action="{% url 'accounts:teacher_toggle_publish' assessment.id %}"
-                            >
-
-                                {% csrf_token %}
-
-
-                                {% if assessment.is_published %}
-
-                                    <button
-                                        type="submit"
-                                        class="unpublish-button"
-                                    >
-                                        Unpublish
-                                    </button>
-
-                                {% else %}
-
-                                    <button
-                                        type="submit"
-                                        class="publish-button"
-                                    >
-                                        Publish
-                                    </button>
-
-                                {% endif %}
-
-                            </form>
-
-                        </td>
-
-                    </tr>
-
-                {% empty %}
-
-                    <tr>
-
-                        <td colspan="7">
-                            No assessments have been created.
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-
-    <div class="card">
-
-        <h2>
-            Student Grades
-        </h2>
-
-        <table>
-
-            <thead>
-
-                <tr>
-
-                    <th>
-                        Student
-                    </th>
-
-                    {% for assessment in assessments %}
-
-                        <th>
-                            {{ assessment.title }}
-                        </th>
-
-                    {% endfor %}
-
-                </tr>
-
-            </thead>
-
-
-            <tbody>
-
-                {% for row in grade_rows %}
-
-                    <tr>
-
-                        <td>
-
-                            {{ row.student.student.student_number }}
-                            -
-                            {{ row.student.student.first_name }}
-                            {{ row.student.student.last_name }}
-
-                        </td>
-
-
-                        {% for item in row.grades %}
-
-                            <td>
-
-                                {% if item.grade %}
-
-                                    <span class="score">
-
-                                        {{ item.grade.score }}
-                                        /
-                                        {{ item.assessment.maximum_score }}
-
-                                        <br>
-
-                                        {{ item.grade.percentage|floatformat:2 }}%
-
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="no-grade">
-                                        No grade
-                                    </span>
-
-                                {% endif %}
-
-                            </td>
-
-                        {% endfor %}
-
-                    </tr>
-
-                {% empty %}
-
-                    <tr>
-
-                        <td colspan="10">
-                            No students are enrolled in this class.
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
+  </div>
 </div>
 
-</body>
+<!-- Assessments -->
+{% if assessments %}
+<div class="p-card" style="margin-bottom:22px;">
+  <div class="p-card-header">
+    <div class="p-card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      Assessments
+    </div>
+    <a href="{% url 'accounts:teacher_create_assessment' assignment.id %}" class="p-btn p-btn-gold p-btn-sm">+ New</a>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="p-table">
+      <thead><tr><th>Title</th><th>Type</th><th>Term</th><th>Date</th><th>Max</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for assessment in assessments %}
+        <tr>
+          <td><strong>{{ assessment.title }}</strong></td>
+          <td>{{ assessment.get_assessment_type_display }}</td>
+          <td>{{ assessment.term }}</td>
+          <td>{{ assessment.assessment_date }}</td>
+          <td>{{ assessment.maximum_score }}</td>
+          <td>
+            {% if assessment.is_published %}
+            <span class="fb fb-paid">PUBLISHED</span>
+            {% else %}
+            <span class="fb fb-partial">DRAFT</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <a href="{% url 'accounts:teacher_grade_entry' assessment.id %}" class="p-btn p-btn-primary p-btn-sm">Enter Grades</a>
+              <form method="post" action="{% url 'accounts:teacher_toggle_publish' assessment.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="p-btn p-btn-outline p-btn-sm">{% if assessment.is_published %}Unpublish{% else %}Publish{% endif %}</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
 
-</html>
+<!-- Students -->
+<div class="p-card">
+  <div class="p-card-header">
+    <div class="p-card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Class Register
+    </div>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="p-table">
+      <thead><tr><th>#</th><th>Student No.</th><th>Name</th></tr></thead>
+      <tbody>
+        {% for item in students %}
+        <tr>
+          <td style="color:#94a3b8;font-size:12px;">{{ forloop.counter }}</td>
+          <td><span style="font-family:monospace;font-size:12px;">{{ item.student.student_number }}</span></td>
+          <td><strong>{{ item.student.first_name }} {{ item.student.last_name }}</strong></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:32px;">No students enrolled.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

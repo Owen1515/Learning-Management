@@ -1,0 +1,93 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Enrolment | Ngundu Halt Government High School</title>
+  <link rel="icon" type="image/webp" href="{% static 'school_site/images/school-crest.webp' %}">
+  <link rel="stylesheet" href="{% static 'school_site/vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'school_site/css/styles.css' %}">
+  <style>
+    body { min-height: 100vh; background: #f2f5f9; }
+    .registration-header { background: var(--navy-deep); color: #fff; padding: 18px 0; border-bottom: 3px solid var(--gold); }
+    .registration-brand { display: flex; align-items: center; gap: 12px; color: #fff; }
+    .registration-brand img { width: 48px; height: 48px; object-fit: contain; background: #fff; }
+    .registration-brand strong, .registration-brand small { display: block; }
+    .registration-brand strong { font-size: 13px; letter-spacing: .06em; }
+    .registration-brand small { color: #e6d29a; font-size: 9px; letter-spacing: .12em; }
+    .registration-main { max-width: 900px; padding: 42px 16px 56px; }
+    .registration-heading { margin-bottom: 24px; }
+    .registration-heading h1 { font-size: 30px; margin: 0 0 8px; }
+    .registration-heading p { color: #637087; font-size: 14px; margin: 0; }
+    .registration-form { background: #fff; border: 1px solid #e1e7ef; padding: 28px; }
+    .registration-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
+    .registration-field label { display: block; color: #26364d; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+    .registration-field .form-control, .registration-field .form-select { min-height: 44px; border-color: #d7dee8; border-radius: 3px; font-size: 14px; }
+    .registration-field textarea.form-control { min-height: 86px; }
+    .registration-field-full { grid-column: 1 / -1; }
+    .field-help { color: #6d7889; font-size: 11px; margin: 5px 0 0; }
+    .field-error { color: #a51f35; font-size: 11px; margin: 5px 0 0; }
+    .registration-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid #e7ebf1; margin-top: 24px; padding-top: 20px; }
+    .registration-actions p { color: #637087; font-size: 11px; margin: 0; }
+    .registration-actions .btn { white-space: normal; }
+    .registration-alert { background: #fdf0f2; color: #671827; border-left: 3px solid #a51f35; padding: 11px 14px; font-size: 12px; margin-bottom: 18px; }
+    .registration-back { color: #536178; font-size: 12px; font-weight: 650; }
+    @media (max-width: 600px) {
+      .registration-main { padding-top: 28px; }
+      .registration-form { padding: 20px 16px; }
+      .registration-grid { grid-template-columns: 1fr; gap: 15px; }
+      .registration-field-full { grid-column: auto; }
+      .registration-actions { align-items: stretch; flex-direction: column; }
+      .registration-actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="registration-header">
+    <div class="container d-flex align-items-center justify-content-between gap-3">
+      <a class="registration-brand text-decoration-none" href="/">
+        <img src="{% static 'school_site/images/school-crest.webp' %}" alt="">
+        <span><strong>NGUNDU HALT</strong><small>GOVERNMENT HIGH SCHOOL</small></span>
+      </a>
+      <a class="btn btn-outline-light btn-sm" href="{% url 'accounts:login' %}">Portal login</a>
+    </div>
+  </header>
+  <main class="container registration-main">
+    <div class="registration-heading">
+      <div class="eyebrow">ADMISSIONS</div>
+      <h1>Student enrolment</h1>
+      <p>Provide the student and parent or guardian details for school enrolment.</p>
+    </div>
+
+    {% for message in messages %}
+      <div class="registration-alert">{{ message }}</div>
+    {% endfor %}
+    {% if form.non_field_errors %}
+      <div class="registration-alert">{{ form.non_field_errors }}</div>
+    {% endif %}
+    {% if not has_active_classes %}
+      <div class="registration-alert">Online registration is not available because no active classes are configured. Please contact the school office.</div>
+    {% endif %}
+
+    <form class="registration-form" method="post" novalidate>
+      {% csrf_token %}
+      <div class="registration-grid">
+        {% for field in form %}
+          <div class="registration-field{% if field.name == 'home_address' %} registration-field-full{% endif %}">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}<p class="field-help">{{ field.help_text }}</p>{% endif %}
+            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="registration-actions">
+        <p>Portal access remains disabled until the school reviews this enrolment.</p>
+        <button class="btn btn-school" type="submit"{% if not has_active_classes %} disabled{% endif %}>Submit enrolment</button>
+      </div>
+    </form>
+    <p class="mt-3 mb-0"><a class="registration-back" href="/">Back to school website</a></p>
+  </main>
+</body>
+</html>

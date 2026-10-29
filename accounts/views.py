@@ -3,8 +3,12 @@ from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.dateparse import parse_date
+
+from .forms import StudentRegistrationForm
 
 from academics.models import (
     SchoolProfile,
@@ -13,6 +17,7 @@ from academics.models import (
     Term,
 )
 
+from fees.models import TermFee, FeePayment
 from grades.models import (
     Assessment,
     StudentGrade,
@@ -24,20 +29,17 @@ def get_letter_grade(percentage):
     if percentage is None:
         return "-"
 
-    if percentage >= 80:
-        return "A"
-
     if percentage >= 70:
-        return "B"
-
+        return "A"
     if percentage >= 60:
-        return "C"
-
+        return "B"
     if percentage >= 50:
+        return "C"
+    if percentage >= 45:
         return "D"
-
-    return "F"
-
+    if percentage >= 40:
+        return "E"
+    return "U"
 
 def build_student_term_summary(enrollment, selected_term=None):
     grades = StudentGrade.objects.filter(
@@ -177,6 +179,40 @@ def portal_login(request):
     )
 
 
+def student_registration(request):
+    if request.method == "POST":
+        form = StudentRegistrationForm(request.POST)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    form.save(admission_date=timezone.localdate())
+            except IntegrityError:
+                form.add_error(
+                    "student_number",
+                    "This student number is already registered.",
+                )
+            else:
+                return redirect("accounts:student_registration_complete")
+    else:
+        form = StudentRegistrationForm()
+
+    return render(
+        request,
+        "accounts/student_registration.html",
+        {
+            "form": form,
+            "has_active_classes": form.fields["classroom"].queryset.exists(),
+        },
+    )
+
+
+def student_registration_complete(request):
+    return render(
+        request,
+        "accounts/student_registration_complete.html",
+    )
+
+
 @login_required
 def teacher_dashboard(request):
     if not hasattr(request.user, "profile"):
@@ -196,9 +232,17 @@ def teacher_dashboard(request):
         "school_year",
     )
 
+    total_assessments = 0
+    published_assessments = 0
+    for _a in assignments:
+        _qs = Assessment.objects.filter(teacher_assignment=_a)
+        total_assessments += _qs.count()
+        published_assessments += _qs.filter(is_published=True).count()
     context = {
         "teacher": teacher_profile,
         "assignments": assignments,
+        "total_assessments": total_assessments,
+        "published_assessments": published_assessments,
     }
 
     return render(
@@ -671,11 +715,29 @@ def student_dashboard(request):
             build_student_term_summary(enrollment)
         )
 
+    from decimal import Decimal as _D2
+    _s_payments_usd = _D2("0")
+    _s_fees_usd = _D2("0")
+    if enrollment:
+        for _t2 in enrollment.school_year.terms.all():
+            for _fp in FeePayment.objects.filter(student=student_profile, term=_t2):
+                if _fp.currency == "USD":
+                    _s_payments_usd += _fp.amount
+            try:
+                _tfs = _t2.fee_schedule
+                if _tfs.is_published:
+                    _s_fees_usd += _tfs.total_usd
+            except TermFee.DoesNotExist:
+                pass
+    _s_bal = _s_fees_usd - _s_payments_usd
+
     context = {
         "student": student_profile,
         "enrollment": enrollment,
         "grade_rows": grade_rows,
         "subject_summaries": subject_summaries,
+        "total_payments_usd": _s_payments_usd if _s_fees_usd else None,
+        "balance_usd": _s_bal if _s_fees_usd else None,
     }
 
     return render(
@@ -737,3 +799,68 @@ def portal_logout(request):
     return redirect(
         "accounts:login"
     )
+
+
+from decimal import Decimal as _Decimal
+
+
+@login_required
+def student_financial(request):
+    if not hasattr(request.user, "profile"):
+        return redirect("accounts:login")
+    if request.user.profile.role != "STUDENT":
+        return redirect("accounts:login")
+    student = request.user.profile.student_profile
+    enrollments = student.enrollments.select_related("classroom", "school_year").order_by("-school_year__start_date")
+    term_rows = []
+    total_fees_usd = _Decimal("0")
+    total_paid_usd = _Decimal("0")
+    total_paid_zwg = _Decimal("0")
+    seen = set()
+    for enrollment in enrollments:
+        for term in enrollment.school_year.terms.all().order_by("number"):
+            if term.id in seen:
+                continue
+            seen.add(term.id)
+            try:
+                fee_sched = term.fee_schedule
+                if not fee_sched.is_published:
+                    fee_sched = None
+            except TermFee.DoesNotExist:
+                fee_sched = None
+            fees_usd = fee_sched.total_usd if fee_sched else _Decimal("0")
+            payments = FeePayment.objects.filter(student=student, term=term).order_by("payment_date")
+            paid_usd = sum((p.amount for p in payments if p.currency == "USD"), _Decimal("0"))
+            paid_zwg = sum((p.amount for p in payments if p.currency == "ZWG"), _Decimal("0"))
+            total_fees_usd += fees_usd
+            total_paid_usd += paid_usd
+            total_paid_zwg += paid_zwg
+            term_rows.append({
+                "term": term,
+                "fee_schedule": fee_sched,
+                "fees_usd": fees_usd,
+                "paid_usd": paid_usd,
+                "paid_zwg": paid_zwg,
+                "balance_usd": fees_usd - paid_usd,
+                "payments": payments,
+            })
+    context = {
+        "student": student,
+        "term_rows": term_rows,
+        "total_fees_usd": total_fees_usd,
+        "total_paid_usd": total_paid_usd,
+        "total_paid_zwg": total_paid_zwg,
+        "balance_usd": total_fees_usd - total_paid_usd,
+    }
+    return render(request, "accounts/student_financial.html", context)
+
+
+@login_required
+def fee_schedule(request):
+    if not hasattr(request.user, "profile"):
+        return redirect("accounts:login")
+    fee_schedules = TermFee.objects.filter(is_published=True).select_related(
+        "term", "term__school_year"
+    ).order_by("-term__school_year__start_date", "term__number")
+    return render(request, "accounts/fee_schedule.html", {"fee_schedules": fee_schedules})
+

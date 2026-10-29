@@ -1,281 +1,80 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "accounts/portal_base.html" %}
+{% load static %}
+{% block title %}Create Assessment | Teacher Portal{% endblock %}
+{% block portal_type %}TEACHER PORTAL{% endblock %}
+{% block sidebar_role %}Teacher{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
+{% block sidebar_nav %}
+<li><a href="{% url 'accounts:teacher_dashboard' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  <span class="sb-label">Dashboard</span>
+</a></li>
+<li><a href="{% url 'library:teacher_library' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  <span class="sb-label">Library Manager</span>
+</a></li>
+<li><a href="{% url 'library:marking_scheme_generator' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/></svg>
+  <span class="sb-label">AI Mark Scheme</span>
+</a></li>
+{% endblock %}
 
-    <title>
-        Create Assessment
-    </title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background: #f5f7fa;
-        }
-
-        .header {
-            background: #1f4e78;
-            color: white;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .header a {
-            color: white;
-        }
-
-        .container {
-            width: 700px;
-            max-width: 90%;
-            margin: 35px auto;
-        }
-
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #1f4e78;
-            font-weight: bold;
-            text-decoration: none;
-        }
-
-        label {
-            display: block;
-            margin-top: 18px;
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
-
-        input,
-        select {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 11px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        button {
-            margin-top: 25px;
-            padding: 12px 24px;
-            background: #198754;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background: #146c43;
-        }
-
-        .message {
-            background: #ffe5e5;
-            padding: 12px;
-            margin-bottom: 12px;
-            border-radius: 5px;
-        }
-
-        .help {
-            font-size: 13px;
-            color: #666;
-            margin-top: 5px;
-        }
-    </style>
-
-</head>
-
-<body>
-
-
-<div class="header">
-
-    <strong>
-        School Portal
-    </strong>
-
-    <div>
-
-        {{ teacher.first_name }}
-        {{ teacher.last_name }}
-
-        |
-
-        <a href="{% url 'accounts:logout' %}">
-            Logout
-        </a>
-
-    </div>
-
+{% block content %}
+<div class="p-page-header">
+  <a href="{% url 'accounts:teacher_class_detail' assignment.id %}" class="p-btn p-btn-outline p-btn-sm" style="margin-bottom:14px;">← Back to Class</a>
+  <div class="p-eyebrow">{{ assignment.classroom.name }} — {{ assignment.subject.name }}</div>
+  <h1>Create Assessment</h1>
+  <p>New assessment for {{ assignment.school_year.name }}</p>
 </div>
 
-
-<div class="container">
-
-    <a
-        class="back-link"
-        href="{% url 'accounts:teacher_class_detail' assignment.id %}"
-    >
-        ← Back to {{ assignment.classroom.name }}
-        {{ assignment.subject.name }}
-    </a>
-
-
-    <div class="card">
-
-        <h1>
-            Create Assessment
-        </h1>
-
-        <p>
-            <strong>Class:</strong>
-            {{ assignment.classroom.name }}
-        </p>
-
-        <p>
-            <strong>Subject:</strong>
-            {{ assignment.subject.name }}
-        </p>
-
-
-        {% for message in messages %}
-
-            <div class="message">
-                {{ message }}
-            </div>
-
-        {% endfor %}
-
-
-        <form method="post">
-
-            {% csrf_token %}
-
-
-            <label>
-                Assessment Title
-            </label>
-
-            <input
-                type="text"
-                name="title"
-                placeholder="Example: Mathematics Test 2"
-                required
-            >
-
-
-            <label>
-                Assessment Type
-            </label>
-
-            <select
-                name="assessment_type"
-                required
-            >
-
-                <option value="">
-                    Select assessment type
-                </option>
-
-                {% for value, label in assessment_types %}
-
-                    <option value="{{ value }}">
-                        {{ label }}
-                    </option>
-
-                {% endfor %}
-
-            </select>
-
-
-            <label>
-                Term
-            </label>
-
-            <select
-                name="term"
-                required
-            >
-
-                <option value="">
-                    Select term
-                </option>
-
-                {% for term in terms %}
-
-                    <option value="{{ term.id }}">
-                        {{ term.get_number_display }}
-                    </option>
-
-                {% endfor %}
-
-            </select>
-
-
-            <label>
-                Maximum Score
-            </label>
-
-            <input
-                type="number"
-                name="maximum_score"
-                min="0.01"
-                step="0.01"
-                value="100"
-                required
-            >
-
-
-            <label>
-                Weight
-            </label>
-
-            <input
-                type="number"
-                name="weight"
-                min="0"
-                max="100"
-                step="0.01"
-                placeholder="Example: 20"
-                required
-            >
-
-            <div class="help">
-                Enter 20 if this assessment is worth 20% of the term grade.
-            </div>
-
-
-            <label>
-                Assessment Date
-            </label>
-
-            <input
-                type="date"
-                name="assessment_date"
-                required
-            >
-
-
-            <button type="submit">
-                Create Assessment
-            </button>
-
-        </form>
-
-    </div>
-
+<div class="p-card" style="max-width:680px;">
+  <div class="p-card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="p-label">Assessment Title *</label>
+          <input type="text" name="title" class="p-input" placeholder="e.g. Term 1 Test — Chapter 3" required>
+        </div>
+        <div class="col-md-6">
+          <label class="p-label">Assessment Type *</label>
+          <select name="assessment_type" class="p-select" required>
+            <option value="">— Select type —</option>
+            <option value="TEST">Class Test</option>
+            <option value="EXAM">Examination</option>
+            <option value="ASSIGNMENT">Assignment</option>
+            <option value="PROJECT">Project</option>
+            <option value="PRACTICAL">Practical</option>
+            <option value="QUIZ">Quiz</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="p-label">Term *</label>
+          <select name="term" class="p-select" required>
+            <option value="">— Select term —</option>
+            {% for term in terms %}
+            <option value="{{ term.id }}">{{ term }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="p-label">Maximum Score *</label>
+          <input type="number" name="maximum_score" class="p-input" placeholder="100" min="1" max="1000" required>
+        </div>
+        <div class="col-md-6">
+          <label class="p-label">Weight (%)</label>
+          <input type="number" name="weight" class="p-input" placeholder="e.g. 30" min="0" max="100">
+        </div>
+        <div class="col-md-6">
+          <label class="p-label">Assessment Date</label>
+          <input type="date" name="assessment_date" class="p-input">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid #e2eaf5;">
+        <button type="submit" class="p-btn p-btn-gold">Create Assessment</button>
+        <a href="{% url 'accounts:teacher_class_detail' assignment.id %}" class="p-btn p-btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
 </div>
-
-</body>
-
-</html>
+{% endblock %}

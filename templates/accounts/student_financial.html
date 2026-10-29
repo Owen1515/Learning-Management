@@ -1,0 +1,133 @@
+{% extends "accounts/portal_base.html" %}
+{% load static %}
+{% block title %}Financial Statement | Ngundu Halt Portal{% endblock %}
+{% block portal_type %}STUDENT PORTAL{% endblock %}
+{% block sidebar_role %}Student{% endblock %}
+
+{% block sidebar_nav %}
+<li><a href="{% url 'accounts:student_dashboard' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  <span class="sb-label">Dashboard</span>
+</a></li>
+<li><a href="{% url 'accounts:student_report_card' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+  <span class="sb-label">Report Card</span>
+</a></li>
+<li><a href="{% url 'accounts:student_financial' %}" class="active">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+  <span class="sb-label">Financial Statement</span>
+</a></li>
+<li><a href="{% url 'accounts:fee_schedule' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  <span class="sb-label">Fees Schedule</span>
+</a></li>
+<li><a href="{% url 'library:student_library' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  <span class="sb-label">Library</span>
+</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="p-page-header">
+  <div class="p-eyebrow">Finances</div>
+  <h1>Financial Statement</h1>
+  <p>{{ student.first_name }} {{ student.last_name }} &nbsp;·&nbsp; {{ student.student_number }}</p>
+</div>
+
+<!-- Summary stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="p-stat">
+      <div class="p-stat-icon navy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      </div>
+      <div><div class="p-stat-val">${{ total_fees_usd|floatformat:2 }}</div><div class="p-stat-label">Total Billed</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="p-stat">
+      <div class="p-stat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>
+      </div>
+      <div><div class="p-stat-val" style="color:#059669;">${{ total_paid_usd|floatformat:2 }}</div><div class="p-stat-label">Total Paid (USD)</div></div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="p-stat">
+      <div class="p-stat-icon {% if balance_usd > 0 %}red{% else %}green{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div>
+        <div class="p-stat-val" style="color:{% if balance_usd > 0 %}#dc2626{% else %}#059669{% endif %};">${{ balance_usd|floatformat:2 }}</div>
+        <div class="p-stat-label">{% if balance_usd > 0 %}Outstanding{% else %}Settled{% endif %}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="p-stat">
+      <div class="p-stat-icon blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div><div class="p-stat-val">{{ total_paid_zwg|floatformat:2 }}</div><div class="p-stat-label">Paid (ZWG)</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Term breakdowns -->
+{% for row in term_rows %}
+<div class="p-card" style="margin-bottom:20px;">
+  <div class="p-card-header" style="background:#f8fafd;">
+    <div class="p-card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      {{ row.term }} — {{ row.term.school_year.name }}
+    </div>
+    <span class="fb {% if row.balance_usd <= 0 %}fb-paid{% elif row.paid_usd > 0 %}fb-partial{% else %}fb-due{% endif %}">
+      {% if row.balance_usd <= 0 %}PAID{% elif row.paid_usd > 0 %}PARTIAL{% else %}OUTSTANDING{% endif %}
+    </span>
+  </div>
+  <div class="p-card-body">
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-3">
+        <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Billed (USD)</div>
+        <div style="font-size:20px;font-weight:800;color:#0f2548;">${{ row.fees_usd|floatformat:2 }}</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Paid (USD)</div>
+        <div style="font-size:20px;font-weight:800;color:#059669;">${{ row.paid_usd|floatformat:2 }}</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Balance (USD)</div>
+        <div style="font-size:20px;font-weight:800;color:{% if row.balance_usd > 0 %}#dc2626{% else %}#059669{% endif %};">${{ row.balance_usd|floatformat:2 }}</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Paid (ZWG)</div>
+        <div style="font-size:20px;font-weight:800;color:#0f2548;">{{ row.paid_zwg|floatformat:2 }}</div>
+      </div>
+    </div>
+    {% if row.payments %}
+    <div style="overflow-x:auto;margin-top:12px;">
+      <table class="p-table">
+        <thead><tr><th>Date</th><th>Amount</th><th>Currency</th><th>Method</th><th>Reference</th></tr></thead>
+        <tbody>
+          {% for p in row.payments %}
+          <tr>
+            <td>{{ p.payment_date }}</td>
+            <td><strong>${{ p.amount }}</strong></td>
+            <td>{{ p.currency }}</td>
+            <td>{{ p.get_payment_method_display }}</td>
+            <td><span style="font-family:monospace;font-size:11px;color:#94a3b8;">{{ p.reference|default:"—" }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-alert p-alert-warn" style="margin-top:8px;">No payments recorded for this term.</div>
+    {% endif %}
+  </div>
+</div>
+{% empty %}
+<div class="p-card"><div class="p-card-body" style="text-align:center;color:#94a3b8;padding:40px;">No fee records found. Contact the bursar for assistance.</div></div>
+{% endfor %}
+<p style="font-size:11px;color:#94a3b8;margin-top:8px;">Contact the school bursar for payment queries. Records are managed by administration.</p>
+{% endblock %}

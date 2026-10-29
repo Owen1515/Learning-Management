@@ -1,0 +1,84 @@
+{% extends "accounts/portal_base.html" %}
+{% load static %}
+{% block title %}{{ doc.title }} | Library{% endblock %}
+{% block portal_type %}STUDENT PORTAL{% endblock %}
+{% block sidebar_role %}Student{% endblock %}
+
+{% block sidebar_nav %}
+<li><a href="{% url 'accounts:student_dashboard' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  <span class="sb-label">Dashboard</span>
+</a></li>
+<li><a href="{% url 'accounts:student_report_card' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+  <span class="sb-label">Report Card</span>
+</a></li>
+<li><a href="{% url 'accounts:student_financial' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+  <span class="sb-label">Financial Statement</span>
+</a></li>
+<li><a href="{% url 'accounts:fee_schedule' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  <span class="sb-label">Fees Schedule</span>
+</a></li>
+<li><a href="{% url 'library:student_library' %}" class="active">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  <span class="sb-label">Library</span>
+</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="p-page-header">
+  <a href="{% url 'library:student_library' %}" class="p-btn p-btn-outline p-btn-sm" style="margin-bottom:14px;">← Back to Library</a>
+  <div class="p-eyebrow">{{ doc.get_doc_type_display }} &nbsp;·&nbsp; {{ doc.subject.name }}</div>
+  <h1>{{ doc.title }}</h1>
+  <p>{{ doc.get_level_display }} &nbsp;·&nbsp; Added {{ doc.created_at|date:"d M Y" }}</p>
+</div>
+
+<div class="p-card" style="margin-bottom:20px;">
+  <div class="p-card-header">
+    <div class="p-card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/></svg>
+      Document
+    </div>
+    <div style="display:flex;gap:8px;">
+      {% if doc.has_file %}
+      <a href="{{ doc.file.url }}" target="_blank" class="p-btn p-btn-gold p-btn-sm">⬇ Download File</a>
+      {% endif %}
+      <button onclick="window.print()" class="p-btn p-btn-outline p-btn-sm">🖨 Print</button>
+    </div>
+  </div>
+  <div class="p-card-body">
+    {% if doc.description %}
+    <div class="p-alert p-alert-info" style="margin-bottom:16px;">{{ doc.description }}</div>
+    {% endif %}
+
+    {% if doc.has_file %}
+    <div style="background:#f8fafd;border:2px dashed #d1dde8;border-radius:8px;padding:32px;text-align:center;margin-bottom:20px;">
+      <svg style="width:40px;height:40px;margin-bottom:10px;color:#94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+      <p style="font-weight:600;color:#475569;">File attached</p>
+      <p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">{{ doc.file.name|cut:"library/" }}</p>
+      <a href="{{ doc.file.url }}" target="_blank" class="p-btn p-btn-primary">⬇ Open / Download</a>
+    </div>
+    {% endif %}
+
+    {% if doc.has_content %}
+    <div style="background:#fff;border:1px solid #e2eaf5;border-radius:8px;padding:24px;font-size:14px;line-height:1.8;white-space:pre-wrap;font-family:'Inter',monospace;">{{ doc.content }}</div>
+    {% endif %}
+
+    {% if not doc.has_file and not doc.has_content %}
+    <div class="p-alert p-alert-warn">This document has no content yet. Ask your teacher to add material.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+  .p-topbar, .p-sidebar, .p-page-header a, .p-card-header .p-btn { display: none !important; }
+  .p-sidebar { display: none !important; }
+  .p-main { padding: 0 !important; }
+}
+</style>
+{% endblock %}

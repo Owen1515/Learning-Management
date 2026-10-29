@@ -1,320 +1,174 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "accounts/portal_base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
+{% block title %}Dashboard | Ngundu Halt Portal{% endblock %}
+{% block portal_type %}STUDENT PORTAL{% endblock %}
+{% block sidebar_role %}Student{% endblock %}
 
-    <title>Student Dashboard</title>
+{% block sidebar_nav %}
+<li><a href="{% url 'accounts:student_dashboard' %}" class="active">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  <span class="sb-label">Dashboard</span>
+</a></li>
+<li><a href="{% url 'accounts:student_report_card' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+  <span class="sb-label">Report Card</span>
+</a></li>
+<li><a href="{% url 'accounts:student_financial' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+  <span class="sb-label">Financial Statement</span>
+</a></li>
+<li><a href="{% url 'accounts:fee_schedule' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  <span class="sb-label">Fees Schedule</span>
+</a></li>
+<li><a href="{% url 'library:student_library' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  <span class="sb-label">Library</span>
+</a></li>
+{% endblock %}
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f7fa;
-            margin: 0;
-        }
-
-        .header {
-            background: #1f4e78;
-            color: white;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header a {
-            color: white;
-        }
-
-        .container {
-            width: 90%;
-            margin: 30px auto;
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 13px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-        }
-
-        th {
-            background: #eef1f4;
-        }
-
-        .score,
-        .percentage,
-        .average,
-        .letter {
-            font-weight: bold;
-        }
-
-        .letter {
-            font-size: 18px;
-        }
-
-        .empty {
-            color: #777;
-        }
-
-        .report-button {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 12px 20px;
-            background: #198754;
-            color: white !important;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-
-        .report-button:hover {
-            background: #146c43;
-        }
-    </style>
-
-</head>
-
-<body>
-
-<div class="header">
-
-    <strong>Student Portal</strong>
-
-    <div>
-        {{ student.first_name }}
-        {{ student.last_name }}
-
-        |
-
-        <a href="{% url 'accounts:logout' %}">
-            Logout
-        </a>
-    </div>
-
+{% block content %}
+<div class="p-page-header">
+  <div class="p-eyebrow">Student Portal</div>
+  <h1>Welcome back, {{ student.first_name }} 👋</h1>
+  <p>{{ student.student_number }}{% if enrollment %} &nbsp;·&nbsp; {{ enrollment.classroom.name }} &nbsp;·&nbsp; {{ enrollment.school_year.name }}{% endif %}</p>
 </div>
 
-
-<div class="container">
-
-    <div class="card">
-
-        <h1>
-            Welcome,
-            {{ student.first_name }}
-            {{ student.last_name }}
-        </h1>
-
-        <p>
-            <strong>Student Number:</strong>
-            {{ student.student_number }}
-        </p>
-
-        {% if enrollment %}
-
-            <p>
-                <strong>Class:</strong>
-                {{ enrollment.classroom.name }}
-            </p>
-
-            <p>
-                <strong>School Year:</strong>
-                {{ enrollment.school_year.name }}
-            </p>
-
-        {% else %}
-
-            <p>
-                <strong>Class:</strong>
-                No active enrollment found.
-            </p>
-
-        {% endif %}
-
-
-        <a
-            class="report-button"
-            href="{% url 'accounts:student_report_card' %}"
-        >
-            View Report Card
-        </a>
-
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="p-stat">
+      <div class="p-stat-icon navy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </div>
+      <div><div class="p-stat-val">{{ subject_summaries|length }}</div><div class="p-stat-label">Subjects</div></div>
     </div>
-
-
-    <div class="card">
-
-        <h2>Term Summary</h2>
-
-        <table>
-
-            <thead>
-                <tr>
-                    <th>Subject</th>
-                    <th>Term</th>
-                    <th>Weighted Average</th>
-                    <th>Letter Grade</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% for summary in subject_summaries %}
-
-                    <tr>
-
-                        <td>
-                            {{ summary.subject.name }}
-                        </td>
-
-                        <td>
-                            {{ summary.term.get_number_display }}
-                        </td>
-
-                        <td class="average">
-
-                            {% if summary.average is not None %}
-
-                                {{ summary.average|floatformat:2 }}%
-
-                            {% else %}
-
-                                -
-
-                            {% endif %}
-
-                        </td>
-
-                        <td class="letter">
-                            {{ summary.letter_grade }}
-                        </td>
-
-                    </tr>
-
-                {% empty %}
-
-                    <tr>
-                        <td colspan="4" class="empty">
-                            No published term averages are available yet.
-                        </td>
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="p-stat">
+      <div class="p-stat-icon gold">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>
+      </div>
+      <div><div class="p-stat-val">{{ grade_rows|length }}</div><div class="p-stat-label">Assessments</div></div>
     </div>
-
-
-    <div class="card">
-
-        <h2>My Published Grades</h2>
-
-        <table>
-
-            <thead>
-                <tr>
-                    <th>Subject</th>
-                    <th>Assessment</th>
-                    <th>Type</th>
-                    <th>Term</th>
-                    <th>Weight</th>
-                    <th>Score</th>
-                    <th>Percentage</th>
-                    <th>Grade</th>
-                    <th>Comment</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% for row in grade_rows %}
-
-                    <tr>
-
-                        <td>
-                            {{ row.subject.name }}
-                        </td>
-
-                        <td>
-                            {{ row.assessment.title }}
-                        </td>
-
-                        <td>
-                            {{ row.assessment.get_assessment_type_display }}
-                        </td>
-
-                        <td>
-                            {{ row.assessment.term.get_number_display }}
-                        </td>
-
-                        <td>
-                            {{ row.assessment.weight }}%
-                        </td>
-
-                        <td class="score">
-                            {{ row.grade.score }}
-                            /
-                            {{ row.assessment.maximum_score }}
-                        </td>
-
-                        <td class="percentage">
-                            {{ row.grade.percentage|floatformat:2 }}%
-                        </td>
-
-                        <td class="letter">
-                            {{ row.letter_grade }}
-                        </td>
-
-                        <td>
-
-                            {% if row.grade.comment %}
-
-                                {{ row.grade.comment }}
-
-                            {% else %}
-
-                                -
-
-                            {% endif %}
-
-                        </td>
-
-                    </tr>
-
-                {% empty %}
-
-                    <tr>
-                        <td colspan="9" class="empty">
-                            No published grades are available yet.
-                        </td>
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="p-stat">
+      <div class="p-stat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div>
+        <div class="p-stat-val">{% if total_payments_usd %}${{ total_payments_usd|floatformat:0 }}{% else %}—{% endif %}</div>
+        <div class="p-stat-label">Paid (USD)</div>
+      </div>
     </div>
-
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="p-stat">
+      <div class="p-stat-icon {% if balance_usd and balance_usd > 0 %}red{% else %}green{% endif %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div>
+        <div class="p-stat-val">{% if balance_usd is not None %}${{ balance_usd|floatformat:0 }}{% else %}—{% endif %}</div>
+        <div class="p-stat-label">Balance (USD)</div>
+      </div>
+    </div>
+  </div>
 </div>
 
-</body>
+<div class="row g-4">
+  <!-- Term Summary -->
+  <div class="col-lg-7">
+    <div class="p-card">
+      <div class="p-card-header">
+        <div class="p-card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/></svg>
+          Term Summary
+        </div>
+        <a href="{% url 'accounts:student_report_card' %}" class="p-card-link">Full report →</a>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="p-table">
+          <thead><tr><th>Subject</th><th>Term</th><th>Avg</th><th>Grade</th></tr></thead>
+          <tbody>
+            {% for s in subject_summaries %}
+            <tr>
+              <td><strong>{{ s.subject.name }}</strong></td>
+              <td>{{ s.term.get_number_display }}</td>
+              <td>{% if s.average is not None %}{{ s.average|floatformat:1 }}%{% else %}—{% endif %}</td>
+              <td><span class="gb gb-{{ s.letter_grade|lower }}">{{ s.letter_grade }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="color:#94a3b8;padding:28px 16px;text-align:center;">No published results yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-</html>
+  <!-- Recent Grades -->
+  <div class="col-lg-5">
+    <div class="p-card" style="height:100%;">
+      <div class="p-card-header">
+        <div class="p-card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+          Recent Grades
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="p-table">
+          <thead><tr><th>Subject</th><th>Score</th><th>%</th><th>G</th></tr></thead>
+          <tbody>
+            {% for row in grade_rows|slice:":7" %}
+            <tr>
+              <td>
+                <div style="font-weight:600;font-size:12.5px;">{{ row.subject.name }}</div>
+                <div style="font-size:11px;color:#94a3b8;">{{ row.assessment.title }}</div>
+              </td>
+              <td>{{ row.grade.score }}/{{ row.assessment.maximum_score }}</td>
+              <td>{% if row.grade.percentage is not None %}{{ row.grade.percentage|floatformat:1 }}%{% else %}—{% endif %}</td>
+              <td><span class="gb gb-{{ row.letter_grade|lower }}">{{ row.letter_grade }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="color:#94a3b8;padding:28px 16px;text-align:center;">No grades yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick links -->
+<div class="row g-3 mt-1">
+  <div class="col-md-4">
+    <a href="{% url 'accounts:student_financial' %}" style="text-decoration:none;">
+      <div class="p-card" style="padding:18px 20px;display:flex;align-items:center;gap:12px;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow=''">
+        <div class="p-stat-icon green" style="flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <div><div style="font-weight:700;color:#0f2548;font-size:13px;">Financial Statement</div><div style="font-size:11px;color:#94a3b8;">View payments & balance</div></div>
+        <svg style="margin-left:auto;width:16px;height:16px;color:#94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'accounts:fee_schedule' %}" style="text-decoration:none;">
+      <div class="p-card" style="padding:18px 20px;display:flex;align-items:center;gap:12px;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow=''">
+        <div class="p-stat-icon gold" style="flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <div><div style="font-weight:700;color:#0f2548;font-size:13px;">Fees Schedule</div><div style="font-size:11px;color:#94a3b8;">Term fees & due dates</div></div>
+        <svg style="margin-left:auto;width:16px;height:16px;color:#94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'library:student_library' %}" style="text-decoration:none;">
+      <div class="p-card" style="padding:18px 20px;display:flex;align-items:center;gap:12px;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow=''">
+        <div class="p-stat-icon blue" style="flex-shrink:0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+        <div><div style="font-weight:700;color:#0f2548;font-size:13px;">Library</div><div style="font-size:11px;color:#94a3b8;">Notes, papers, schemes</div></div>
+        <svg style="margin-left:auto;width:16px;height:16px;color:#94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}

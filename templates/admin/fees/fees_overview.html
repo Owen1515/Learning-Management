@@ -1,0 +1,189 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Fees Overview Dashboard | Admin{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label='fees' %}">Fees</a>
+  &rsaquo; Fees Overview Dashboard
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  .fov-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin:20px 0; }
+  .fov-stat { background:#fff; border:1px solid #ddd; border-radius:8px; padding:16px; text-align:center; }
+  .fov-stat-val { font-size:26px; font-weight:800; color:#0f2548; margin:6px 0 2px; }
+  .fov-stat-label { font-size:11px; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
+  .fov-stat-sub { font-size:11px; color:#aaa; }
+  .stat-green { color:#157347 !important; }
+  .stat-red { color:#dc3545 !important; }
+
+  .fov-charts { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin:16px 0; }
+  @media(max-width:760px){ .fov-charts { grid-template-columns:1fr; } }
+  .chart-card { background:#fff; border:1px solid #ddd; border-radius:8px; padding:16px; }
+  .chart-card h3 { font-size:13px; font-weight:700; color:#444; margin:0 0 12px; }
+  .chart-box { position:relative; height:220px; }
+
+  .fov-filter { background:#fff; border:1px solid #ddd; border-radius:8px; padding:14px 18px; margin:16px 0; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+  .fov-filter label { font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:4px; }
+  .fov-filter select { padding:6px 10px; border:1px solid #ccc; border-radius:4px; font-size:12px; }
+  .fov-filter .filter-btn { padding:6px 14px; background:#0f2548; color:#fff; border:none; border-radius:4px; font-size:12px; font-weight:700; cursor:pointer; }
+  .fov-filter .clear-btn { padding:6px 12px; background:#fff; color:#555; border:1px solid #ccc; border-radius:4px; font-size:12px; cursor:pointer; text-decoration:none; }
+
+  .results-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .results-table th { background:#f5f5f5; padding:9px 12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#555; border-bottom:2px solid #ddd; text-align:left; }
+  .results-table td { padding:9px 12px; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
+  .results-table tbody tr:hover { background:#fafafa; }
+
+  .pbar { width:72px; height:6px; background:#eee; border-radius:3px; overflow:hidden; display:inline-block; vertical-align:middle; }
+  .pbar-fill { height:100%; border-radius:3px; }
+  .badge-paid    { background:#d1fae5; color:#065f46; font-size:10px; font-weight:700; padding:2px 8px; border-radius:12px; }
+  .badge-partial { background:#fef3c7; color:#92400e; font-size:10px; font-weight:700; padding:2px 8px; border-radius:12px; }
+  .badge-due     { background:#fee2e2; color:#991b1b; font-size:10px; font-weight:700; padding:2px 8px; border-radius:12px; }
+</style>
+
+<h1 style="font-size:22px;margin:0 0 4px;">Fees Overview Dashboard</h1>
+<p style="color:#888;font-size:13px;margin:0 0 16px;">School-wide fee collection · click student rows to drill into payments</p>
+
+<!-- Stats -->
+<div class="fov-stats">
+  <div class="fov-stat">
+    <div class="fov-stat-label">Total Billed</div>
+    <div class="fov-stat-val">${{ total_billed }}</div>
+    <div class="fov-stat-sub">USD this year</div>
+  </div>
+  <div class="fov-stat">
+    <div class="fov-stat-label">Collected (USD)</div>
+    <div class="fov-stat-val stat-green">${{ total_collected }}</div>
+    <div class="fov-stat-sub">{{ collection_pct }}% of billed</div>
+  </div>
+  <div class="fov-stat">
+    <div class="fov-stat-label">Outstanding</div>
+    <div class="fov-stat-val stat-red">${{ total_outstanding }}</div>
+    <div class="fov-stat-sub">{{ outstanding_count }} students owe</div>
+  </div>
+  <div class="fov-stat">
+    <div class="fov-stat-label">Fully Paid</div>
+    <div class="fov-stat-val stat-green">{{ paid_count }}</div>
+    <div class="fov-stat-sub">of {{ total_students }} enrolled</div>
+  </div>
+  <div class="fov-stat">
+    <div class="fov-stat-label">Collected (ZWG)</div>
+    <div class="fov-stat-val">{{ total_collected_zwg }}</div>
+    <div class="fov-stat-sub">ZWG payments</div>
+  </div>
+</div>
+
+<!-- Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<div class="fov-charts">
+  <div class="chart-card">
+    <h3>Collection by Term</h3>
+    <div class="chart-box"><canvas id="termChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>Payment Status</h3>
+    <div class="chart-box"><canvas id="statusChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<form method="get" class="fov-filter">
+  <div>
+    <label>School Year</label>
+    <select name="year">
+      <option value="">All Years</option>
+      {% for yr in school_years %}
+      <option value="{{ yr.id }}" {% if selected_year == yr.id|stringformat:'s' %}selected{% endif %}>{{ yr.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label>Payment Status</label>
+    <select name="status">
+      <option value="">All</option>
+      <option value="paid" {% if selected_status == 'paid' %}selected{% endif %}>Paid</option>
+      <option value="partial" {% if selected_status == 'partial' %}selected{% endif %}>Partial</option>
+      <option value="due" {% if selected_status == 'due' %}selected{% endif %}>Outstanding</option>
+    </select>
+  </div>
+  <button type="submit" class="filter-btn">Filter</button>
+  <a href="{% url 'fees:overview' %}" class="clear-btn">Clear</a>
+  <a href="{% url 'admin:fees_feepayment_add' %}" class="filter-btn" style="background:#d4a843;color:#0f2548;text-decoration:none;margin-left:auto;">+ Record Payment</a>
+</form>
+
+<!-- Student table -->
+<div style="background:#fff;border:1px solid #ddd;border-radius:8px;overflow:hidden;">
+  <div style="padding:12px 16px;border-bottom:1px solid #eee;font-size:13px;font-weight:700;color:#333;">
+    Student Accounts ({{ student_rows|length }} shown)
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Student</th><th>Class</th>
+          <th>Billed (USD)</th><th>Paid (USD)</th>
+          <th>Balance</th><th>Progress</th>
+          <th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in student_rows %}
+        <tr>
+          <td>
+            <strong>{{ row.student.first_name }} {{ row.student.last_name }}</strong><br>
+            <span style="font-family:monospace;font-size:11px;color:#999;">{{ row.student.student_number }}</span>
+          </td>
+          <td>{{ row.classroom }}</td>
+          <td>${{ row.billed }}</td>
+          <td style="color:#157347;font-weight:700;">${{ row.paid }}</td>
+          <td style="color:{% if row.balance > 0 %}#dc3545{% else %}#157347{% endif %};font-weight:700;">${{ row.balance }}</td>
+          <td>
+            <div class="pbar">
+              <div class="pbar-fill" style="width:{{ row.pct }}%;background:{% if row.pct >= 100 %}#157347{% elif row.pct >= 50 %}#d4a843{% else %}#dc3545{% endif %};"></div>
+            </div>
+            <span style="font-size:11px;color:#888;margin-left:5px;">{{ row.pct }}%</span>
+          </td>
+          <td>
+            {% if row.status == 'paid' %}<span class="badge-paid">PAID</span>
+            {% elif row.status == 'partial' %}<span class="badge-partial">PARTIAL</span>
+            {% else %}<span class="badge-due">OUTSTANDING</span>{% endif %}
+          </td>
+          <td style="white-space:nowrap;">
+            <a href="{% url 'admin:fees_feepayment_changelist' %}?student__id={{ row.student.id }}" style="font-size:11px;color:#0f2548;font-weight:600;">History</a>
+            &nbsp;|&nbsp;
+            <a href="{% url 'admin:fees_feepayment_add' %}?student={{ row.student.id }}" style="font-size:11px;color:#157347;font-weight:600;">+ Pay</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center;color:#aaa;padding:40px;">No student fee records found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const tData = {{ term_chart_data|safe }};
+new Chart(document.getElementById('termChart'), {
+  type:'bar',
+  data:{
+    labels:tData.labels,
+    datasets:[
+      {label:'Billed',data:tData.billed,backgroundColor:'rgba(15,37,72,.15)',borderColor:'#0f2548',borderWidth:2,borderRadius:4},
+      {label:'Collected',data:tData.collected,backgroundColor:'rgba(212,168,67,.65)',borderColor:'#d4a843',borderWidth:2,borderRadius:4}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v}}}}
+});
+const sData = {{ status_chart_data|safe }};
+new Chart(document.getElementById('statusChart'), {
+  type:'doughnut',
+  data:{labels:['Paid','Partial','Outstanding'],datasets:[{data:[sData.paid,sData.partial,sData.due],backgroundColor:['#157347','#d4a843','#dc3545'],borderWidth:2,hoverOffset:4}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom'}}}
+});
+</script>
+{% endblock %}

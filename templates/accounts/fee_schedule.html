@@ -1,0 +1,97 @@
+{% extends "accounts/portal_base.html" %}
+{% load static %}
+{% block title %}Fees Schedule | Ngundu Halt Portal{% endblock %}
+{% block portal_type %}STUDENT PORTAL{% endblock %}
+{% block sidebar_role %}Student{% endblock %}
+
+{% block sidebar_nav %}
+<li><a href="{% url 'accounts:student_dashboard' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  <span class="sb-label">Dashboard</span>
+</a></li>
+<li><a href="{% url 'accounts:student_report_card' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+  <span class="sb-label">Report Card</span>
+</a></li>
+<li><a href="{% url 'accounts:student_financial' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+  <span class="sb-label">Financial Statement</span>
+</a></li>
+<li><a href="{% url 'accounts:fee_schedule' %}" class="active">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  <span class="sb-label">Fees Schedule</span>
+</a></li>
+<li><a href="{% url 'library:student_library' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  <span class="sb-label">Library</span>
+</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="p-page-header">
+  <div class="p-eyebrow">School Fees</div>
+  <h1>Fees Schedule</h1>
+  <p>Published term fees in USD and ZWG. Contact the bursar for payment options.</p>
+</div>
+
+{% for fee in fee_schedules %}
+<div class="p-card" style="margin-bottom:22px;">
+  <div class="p-card-header">
+    <div class="p-card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      {{ fee.term }} — {{ fee.term.school_year.name }}
+    </div>
+    {% if fee.due_date %}
+    <span style="font-size:11px;background:var(--gold-pale);color:#92660a;padding:5px 12px;border-radius:20px;font-weight:700;">
+      📅 Due: {{ fee.due_date }}
+    </span>
+    {% endif %}
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="p-table">
+      <thead>
+        <tr>
+          <th>Fee Item</th>
+          <th>USD Amount</th>
+          <th>ZWG Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if fee.tuition_usd %}
+        <tr><td>Tuition Fees</td><td><strong>US${{ fee.tuition_usd }}</strong></td><td>ZWG {{ fee.tuition_zwg|default:"—" }}</td></tr>
+        {% endif %}
+        {% if fee.boarding_usd %}
+        <tr><td>Boarding Fees</td><td><strong>US${{ fee.boarding_usd }}</strong></td><td>ZWG {{ fee.boarding_zwg|default:"—" }}</td></tr>
+        {% endif %}
+        {% if fee.development_usd %}
+        <tr><td>Development Levy</td><td><strong>US${{ fee.development_usd }}</strong></td><td>ZWG {{ fee.development_zwg|default:"—" }}</td></tr>
+        {% endif %}
+        {% if fee.exam_usd %}
+        <tr><td>Exam Fees</td><td><strong>US${{ fee.exam_usd }}</strong></td><td>ZWG {{ fee.exam_zwg|default:"—" }}</td></tr>
+        {% endif %}
+        {% if fee.other_usd %}
+        <tr><td>{{ fee.other_label|default:"Other Fees" }}</td><td><strong>US${{ fee.other_usd }}</strong></td><td>ZWG {{ fee.other_zwg|default:"—" }}</td></tr>
+        {% endif %}
+        <tr style="font-weight:800;background:#f8fafd;">
+          <td>TOTAL</td>
+          <td style="color:#0f2548;">US${{ fee.total_usd }}</td>
+          <td style="color:#0f2548;">ZWG {{ fee.total_zwg }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  {% if fee.notes %}
+  <div style="padding:12px 20px;background:#f8fafd;border-top:1px solid #e8edf5;font-size:12px;color:#64748b;">
+    <strong>Note:</strong> {{ fee.notes }}
+  </div>
+  {% endif %}
+</div>
+{% empty %}
+<div class="p-card">
+  <div class="p-card-body" style="text-align:center;color:#94a3b8;padding:48px;">
+    <svg style="width:48px;height:48px;margin-bottom:12px;opacity:.3;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <p>No fee schedules published yet. Check back soon.</p>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

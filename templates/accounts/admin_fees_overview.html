@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fees Overview | Admin</title>
+  {% load static %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --navy:#0f2548; --gold:#d4a843; --gold-pale:#fdf6e3; }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Inter',system-ui,sans-serif; background:#f0f4f9; color:#1e293b; }
+
+    /* Jazzmin doesn't interfere — we render inside #content */
+    .fov-wrap { padding: 24px; }
+
+    .fov-header { margin-bottom:24px; }
+    .fov-header h1 { font-size:22px; font-weight:800; color:var(--navy); }
+    .fov-header p  { color:#64748b; font-size:13px; margin-top:4px; }
+
+    /* Stats row */
+    .fov-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:24px; }
+    .fov-stat { background:#fff; border-radius:10px; padding:16px 18px; border:1px solid #e2eaf5; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .fov-stat-label { font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px; }
+    .fov-stat-val { font-size:24px; font-weight:800; color:var(--navy); }
+    .fov-stat-sub  { font-size:11px; color:#94a3b8; margin-top:3px; }
+
+    /* Cards */
+    .fov-card { background:#fff; border-radius:10px; border:1px solid #e2eaf5; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:20px; overflow:hidden; }
+    .fov-card-head { padding:12px 18px; border-bottom:1px solid #f1f5fb; font-size:13px; font-weight:700; color:var(--navy); display:flex; align-items:center; justify-content:space-between; }
+    .fov-card-body { padding:18px; }
+
+    /* Charts row */
+    .fov-charts { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+    @media(max-width:760px){ .fov-charts { grid-template-columns:1fr; } }
+    .chart-box { position:relative; height:260px; }
+
+    /* Table */
+    .fov-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .fov-table th { background:#f8fafd; padding:9px 14px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#475569; border-bottom:2px solid #e8edf5; text-align:left; }
+    .fov-table td { padding:10px 14px; border-bottom:1px solid #f0f5fb; vertical-align:middle; }
+    .fov-table tbody tr:hover { background:#f8fafd; }
+    .fov-table tbody tr:last-child td { border-bottom:none; }
+    .fov-table a { color:var(--navy); font-weight:600; text-decoration:none; }
+    .fov-table a:hover { color:var(--gold); }
+
+    .badge-paid { background:#ecfdf5; color:#059669; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; }
+    .badge-part { background:#fffbeb; color:#d97706; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; }
+    .badge-due  { background:#fef2f2; color:#dc2626; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; }
+
+    .pbar { width:80px; height:7px; background:#f0f4f9; border-radius:4px; overflow:hidden; display:inline-block; vertical-align:middle; }
+    .pbar-fill { height:100%; border-radius:4px; }
+
+    .filter-row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px; }
+    .fov-select { padding:7px 10px; border-radius:7px; border:1.5px solid #d1dde8; font-size:12px; font-family:inherit; }
+    .fov-btn { padding:7px 14px; border-radius:7px; border:none; background:var(--navy); color:#fff; font-size:12px; font-weight:700; cursor:pointer; }
+    .fov-btn:hover { background:#1a3a6b; }
+  </style>
+</head>
+<body>
+<div class="fov-wrap">
+  <div class="fov-header">
+    <h1>💰 Fees Overview</h1>
+    <p>School-wide fee collection summary · drill down to individual student accounts</p>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="fov-stats">
+    <div class="fov-stat">
+      <div class="fov-stat-label">Total Billed (USD)</div>
+      <div class="fov-stat-val">${{ total_billed|floatformat:2 }}</div>
+      <div class="fov-stat-sub">Current year</div>
+    </div>
+    <div class="fov-stat">
+      <div class="fov-stat-label">Total Collected (USD)</div>
+      <div class="fov-stat-val" style="color:#059669;">${{ total_collected|floatformat:2 }}</div>
+      <div class="fov-stat-sub">{{ collection_pct|floatformat:1 }}% collected</div>
+    </div>
+    <div class="fov-stat">
+      <div class="fov-stat-label">Outstanding (USD)</div>
+      <div class="fov-stat-val" style="color:#dc2626;">${{ total_outstanding|floatformat:2 }}</div>
+      <div class="fov-stat-sub">{{ outstanding_count }} students owe</div>
+    </div>
+    <div class="fov-stat">
+      <div class="fov-stat-label">Fully Paid</div>
+      <div class="fov-stat-val" style="color:#059669;">{{ paid_count }}</div>
+      <div class="fov-stat-sub">of {{ total_students }} enrolled</div>
+    </div>
+    <div class="fov-stat">
+      <div class="fov-stat-label">Collected (ZWG)</div>
+      <div class="fov-stat-val">{{ total_collected_zwg|floatformat:0 }}</div>
+      <div class="fov-stat-sub">ZWG payments</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="fov-charts">
+    <div class="fov-card">
+      <div class="fov-card-head">Collection by Term</div>
+      <div class="fov-card-body"><div class="chart-box"><canvas id="termChart"></canvas></div></div>
+    </div>
+    <div class="fov-card">
+      <div class="fov-card-head">Payment Status Breakdown</div>
+      <div class="fov-card-body"><div class="chart-box"><canvas id="statusChart"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- Student drill-down table -->
+  <div class="fov-card">
+    <div class="fov-card-head">
+      Student Fee Accounts
+      <a href="{% url 'admin:fees_feepayment_add' %}" style="font-size:12px;background:var(--gold);color:var(--navy);padding:5px 12px;border-radius:6px;text-decoration:none;font-weight:700;">+ Record Payment</a>
+    </div>
+    <div class="fov-card-body" style="padding-bottom:0;">
+
+      <!-- Filter -->
+      <form method="get" class="filter-row">
+        <select name="year" class="fov-select">
+          <option value="">All Years</option>
+          {% for yr in school_years %}
+          <option value="{{ yr.id }}" {% if selected_year == yr.id|stringformat:'i' %}selected{% endif %}>{{ yr.name }}</option>
+          {% endfor %}
+        </select>
+        <select name="status" class="fov-select">
+          <option value="">All Statuses</option>
+          <option value="paid" {% if selected_status == 'paid' %}selected{% endif %}>Paid</option>
+          <option value="partial" {% if selected_status == 'partial' %}selected{% endif %}>Partial</option>
+          <option value="due" {% if selected_status == 'due' %}selected{% endif %}>Outstanding</option>
+        </select>
+        <button type="submit" class="fov-btn">Filter</button>
+        <a href="{% url 'fees:overview' %}" style="padding:7px 12px;border-radius:7px;border:1.5px solid #d1dde8;font-size:12px;color:#475569;text-decoration:none;font-weight:600;">Clear</a>
+      </form>
+
+      <div style="overflow-x:auto;">
+        <table class="fov-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Class</th>
+              <th>Billed (USD)</th>
+              <th>Paid (USD)</th>
+              <th>Balance</th>
+              <th>Progress</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in student_rows %}
+            <tr>
+              <td>
+                <div style="font-weight:700;">{{ row.student.first_name }} {{ row.student.last_name }}</div>
+                <div style="font-size:11px;font-family:monospace;color:#94a3b8;">{{ row.student.student_number }}</div>
+              </td>
+              <td>{{ row.classroom }}</td>
+              <td>${{ row.billed|floatformat:2 }}</td>
+              <td style="color:#059669;font-weight:700;">${{ row.paid|floatformat:2 }}</td>
+              <td style="color:{% if row.balance > 0 %}#dc2626{% else %}#059669{% endif %};font-weight:700;">${{ row.balance|floatformat:2 }}</td>
+              <td>
+                {% if row.billed > 0 %}
+                <div class="pbar"><div class="pbar-fill" style="width:{{ row.pct|floatformat:0 }}%;background:{% if row.pct >= 100 %}#059669{% elif row.pct >= 50 %}#d4a843{% else %}#dc2626{% endif %};"></div></div>
+                <span style="font-size:11px;color:#64748b;margin-left:6px;">{{ row.pct|floatformat:0 }}%</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if row.status == 'paid' %}<span class="badge-paid">PAID</span>
+                {% elif row.status == 'partial' %}<span class="badge-part">PARTIAL</span>
+                {% else %}<span class="badge-due">OUTSTANDING</span>{% endif %}
+              </td>
+              <td>
+                <a href="{% url 'admin:fees_feepayment_changelist' %}?student__id={{ row.student.id }}">Payments</a>
+                &nbsp;|&nbsp;
+                <a href="{% url 'admin:fees_feepayment_add' %}?student={{ row.student.id }}">+ Pay</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:40px;">No student records found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.fov-wrap -->
+
+<script>
+// Term bar chart
+const termData = {{ term_chart_data|safe }};
+new Chart(document.getElementById('termChart'), {
+  type: 'bar',
+  data: {
+    labels: termData.labels,
+    datasets: [
+      { label: 'Billed (USD)', data: termData.billed, backgroundColor: 'rgba(15,37,72,.15)', borderColor: '#0f2548', borderWidth: 2, borderRadius: 5 },
+      { label: 'Collected (USD)', data: termData.collected, backgroundColor: 'rgba(212,168,67,.7)', borderColor: '#d4a843', borderWidth: 2, borderRadius: 5 }
+    ]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'top' } }, scales:{ y:{ beginAtZero:true, ticks:{ callback: v => '$'+v } } } }
+});
+
+// Status doughnut
+const statusData = {{ status_chart_data|safe }};
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Fully Paid', 'Partial', 'Outstanding'],
+    datasets: [{ data: [statusData.paid, statusData.partial, statusData.due], backgroundColor: ['#059669','#d4a843','#dc2626'], hoverOffset: 6, borderWidth: 2 }]
+  },
+  options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } }, cutout:'68%' }
+});
+</script>
+</body>
+</html>

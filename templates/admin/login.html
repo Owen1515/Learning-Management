@@ -1,0 +1,76 @@
+{% load i18n static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Login | Ngundu Halt Government High School</title>
+  <link rel="icon" type="image/webp" href="{% static 'school_site/images/school-crest.webp' %}">
+  <link rel="stylesheet" href="{% static 'school_site/vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'school_site/css/styles.css' %}">
+  <style>
+    body{background:var(--navy-deep);min-height:100vh;display:flex;flex-direction:column;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+    .login-page{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 16px;position:relative;overflow:hidden}
+    .login-page::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 80%,rgba(30,75,145,.35),transparent 60%),radial-gradient(ellipse 60% 50% at 80% 10%,rgba(223,189,88,.08),transparent 55%)}
+    .login-card{position:relative;z-index:2;background:#fff;width:100%;max-width:420px;box-shadow:0 32px 80px rgba(4,14,38,.45)}
+    .login-card-header{background:var(--navy-deep);padding:30px 36px 26px;text-align:center;border-bottom:3px solid var(--gold)}
+    .login-crest{width:72px;height:72px;background:#fff;border-radius:50%;padding:6px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center}
+    .login-crest img{width:100%;height:100%;object-fit:contain}
+    .login-school-name{color:#fff;font-size:13px;font-weight:850;letter-spacing:.06em;line-height:1.2;margin-bottom:4px}
+    .login-school-sub{color:var(--gold);font-size:9px;letter-spacing:.14em;font-weight:750}
+    .login-badge{display:inline-block;margin-top:10px;background:rgba(223,189,88,.15);border:1px solid rgba(223,189,88,.35);color:var(--gold);font-size:9px;font-weight:800;letter-spacing:.12em;padding:5px 12px}
+    .login-card-body{padding:30px 36px 34px}
+    .login-title{font-size:19px;color:var(--navy-deep);font-weight:800;margin-bottom:5px;letter-spacing:-.03em}
+    .login-subtitle{font-size:12px;color:#637087;margin-bottom:24px}
+    .error-msg{background:#fef2f2;border-left:3px solid #dc2626;padding:10px 14px;font-size:12px;color:#991b1b;margin-bottom:18px}
+    .btn-login{width:100%;padding:13px;background:var(--navy-deep);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .18s}
+    .btn-login:hover{background:#102c61}
+    .btn-login svg{width:16px;height:16px}
+    .back-link{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#637087;margin-top:22px;text-decoration:none;transition:color .15s}
+    .back-link:hover{color:var(--navy-deep)}
+    .back-link svg{width:14px;height:14px}
+    .admin-footer{text-align:center;padding:16px;font-size:9px;letter-spacing:.1em;color:#8fa5c9}
+  </style>
+</head>
+<body>
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-card-header">
+      <div class="login-crest">
+        {% if school_profile and school_profile.logo %}
+          <img src="{{ school_profile.logo.url }}" alt="School crest">
+        {% else %}
+          <img src="{% static 'school_site/images/school-crest.webp' %}" alt="School crest">
+        {% endif %}
+      </div>
+      <div class="login-school-name">{% if school_profile %}{{ school_profile.school_name|upper }}{% else %}NGUNDU HALT GOVERNMENT HIGH SCHOOL{% endif %}</div>
+      <div class="login-school-sub">CHIVI DISTRICT · MASVINGO</div>
+      <div class="login-badge">ADMINISTRATION PANEL</div>
+    </div>
+    <div class="login-card-body">
+      <div class="login-title">Staff sign in</div>
+      <div class="login-subtitle">Enter your admin credentials to continue.</div>
+      {% if form.errors %}
+        <div class="error-msg">{% if form.non_field_errors %}{{ form.non_field_errors }}{% else %}Invalid username or password.{% endif %}</div>
+      {% endif %}
+      <form method="post" action="{{ app_path }}" id="login-form">
+        {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
+          <input id="{{ form.username.id_for_label }}" class="form-control" type="text" name="{{ form.username.html_name }}" value="{{ form.username.value|default:'' }}" autocomplete="username" autofocus required placeholder="Enter your username">
+        </div>
+        <div class="mb-4">
+          <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
+          <input id="{{ form.password.id_for_label }}" class="form-control" type="password" name="{{ form.password.html_name }}" autocomplete="current-password" required placeholder="Enter your password">
+        </div>
+        <button type="submit" class="btn-login">Sign in to Admin <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+      </form>
+      <a href="/" class="back-link"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7M5 12h14"/></svg>Back to school website</a>
+    </div>
+  </div>
+</div>
+<div class="admin-footer">© Ngundu Halt Government High School</div>
+<script src="{% static 'school_site/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

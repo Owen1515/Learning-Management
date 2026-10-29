@@ -1,0 +1,22 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Enrolment Received | Ngundu Halt Government High School</title>
+  <link rel="icon" type="image/webp" href="{% static 'school_site/images/school-crest.webp' %}">
+  <link rel="stylesheet" href="{% static 'school_site/vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'school_site/css/styles.css' %}">
+</head>
+<body class="min-vh-100 d-flex align-items-center" style="background:#f2f5f9;">
+  <main class="container" style="max-width:620px;">
+    <section class="bg-white border p-4 p-md-5">
+      <div class="eyebrow">ADMISSIONS</div>
+      <h1 class="h2">Enrolment received</h1>
+      <p>Your enrolment details have been recorded. The school office will review the information before portal access is activated.</p>
+      <a class="btn btn-school mt-2" href="{% url 'accounts:login' %}">Return to portal login</a>
+    </section>
+  </main>
+</body>
+</html>

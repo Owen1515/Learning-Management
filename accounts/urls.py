@@ -9,6 +9,16 @@ urlpatterns = [
         views.portal_login,
         name="login",
     ),
+    path(
+        "student/register/",
+        views.student_registration,
+        name="student_registration",
+    ),
+    path(
+        "student/registration/complete/",
+        views.student_registration_complete,
+        name="student_registration_complete",
+    ),
 
     path(
         "logout/",
@@ -52,6 +62,16 @@ urlpatterns = [
         name="student_dashboard",
     ),
 
+    path(
+        "student/financial/",
+        views.student_financial,
+        name="student_financial",
+    ),
+    path(
+        "fees/schedule/",
+        views.fee_schedule,
+        name="fee_schedule",
+    ),
     path(
         "student/report-card/",
         views.student_report_card,

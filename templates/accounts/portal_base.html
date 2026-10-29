@@ -1,0 +1,462 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Portal | Ngundu Halt{% endblock %}</title>
+  <link rel="icon" type="image/webp" href="{% static 'school_site/images/school-crest.webp' %}">
+  <link rel="stylesheet" href="{% static 'school_site/vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy:       #0f2548;
+      --navy-mid:   #1a3a6b;
+      --navy-light: #234f8a;
+      --gold:       #d4a843;
+      --gold-light: #f0c96a;
+      --gold-pale:  #fdf6e3;
+      --sidebar-w:  268px;
+      --topbar-h:   58px;
+      --radius:     10px;
+      --shadow:     0 1px 6px rgba(0,0,0,.08);
+      --shadow-md:  0 4px 20px rgba(0,0,0,.10);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: #f0f4f9;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ═══════════════════════════════ TOPBAR ═══════════════════════════════ */
+    .p-topbar {
+      position: sticky; top: 0; z-index: 1050;
+      height: var(--topbar-h);
+      background: var(--navy);
+      display: flex; align-items: center;
+      padding: 0 16px;
+      gap: 14px;
+      border-bottom: 2px solid var(--gold);
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+      flex-shrink: 0;
+    }
+    .p-toggle {
+      background: none; border: none; color: rgba(255,255,255,.8);
+      cursor: pointer; padding: 6px 8px; border-radius: 6px;
+      display: flex; align-items: center;
+      transition: background .15s, color .15s;
+    }
+    .p-toggle:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .p-toggle svg { width: 20px; height: 20px; }
+
+    .p-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: #fff; flex: 1;
+    }
+    .p-brand img { width: 34px; height: 34px; object-fit: contain; border-radius: 50%; background: #fff; padding: 2px; }
+    .p-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+    .p-brand-name { font-size: 13px; font-weight: 800; letter-spacing: .05em; }
+    .p-brand-sub { font-size: 9px; color: var(--gold-light); letter-spacing: .13em; font-weight: 600; }
+
+    .p-topbar-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+
+    .p-user-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 24px; padding: 6px 14px;
+    }
+    .p-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--gold); color: var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 800; flex-shrink: 0;
+    }
+    .p-user-name { font-size: 12px; color: rgba(255,255,255,.9); font-weight: 500; }
+
+    .p-topbar-btn {
+      font-size: 11px; font-weight: 600;
+      padding: 6px 14px; border-radius: 6px;
+      text-decoration: none; transition: all .15s;
+      border: 1px solid rgba(255,255,255,.2);
+      color: rgba(255,255,255,.75);
+      white-space: nowrap;
+    }
+    .p-topbar-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+    /* ═══════════════════════════════ LAYOUT ═══════════════════════════════ */
+    .p-layout { display: flex; flex: 1; min-height: 0; }
+    .p-overlay {
+      display: none; position: fixed;
+      inset: var(--topbar-h) 0 0 0;
+      background: rgba(0,0,0,.45);
+      z-index: 998;
+    }
+    .p-overlay.show { display: block; }
+
+    /* ═══════════════════════════════ SIDEBAR ═══════════════════════════════ */
+    .p-sidebar {
+      width: var(--sidebar-w);
+      background: var(--navy);
+      display: flex; flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+      transition: width .22s cubic-bezier(.4,0,.2,1);
+      position: relative;
+      z-index: 999;
+    }
+    .p-sidebar.collapsed { width: 0; }
+
+    .p-sidebar-inner {
+      width: var(--sidebar-w);
+      display: flex; flex-direction: column;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar user card */
+    .sb-user-card {
+      padding: 20px 16px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .sb-avatar-lg {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--navy); font-size: 14px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .sb-user-info { overflow: hidden; }
+    .sb-user-name { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sb-user-role { font-size: 10px; color: var(--gold-light); letter-spacing: .1em; font-weight: 600; text-transform: uppercase; }
+
+    /* Nav sections */
+    .sb-section { padding: 14px 12px 4px; }
+    .sb-section-label {
+      font-size: 9px; font-weight: 700;
+      color: rgba(255,255,255,.35);
+      letter-spacing: .15em; text-transform: uppercase;
+      padding: 0 8px 8px;
+    }
+    .sb-nav { list-style: none; }
+    .sb-nav li { margin-bottom: 2px; }
+    .sb-nav a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 8px;
+      color: rgba(255,255,255,.7);
+      text-decoration: none; font-size: 13px; font-weight: 500;
+      white-space: nowrap; overflow: hidden;
+      transition: background .15s, color .15s;
+      position: relative;
+    }
+    .sb-nav a .sb-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: .75; transition: opacity .15s; }
+    .sb-nav a .sb-label { flex: 1; }
+    .sb-nav a .sb-badge {
+      font-size: 9px; font-weight: 800;
+      background: var(--gold); color: var(--navy);
+      padding: 2px 6px; border-radius: 10px;
+      margin-left: auto; flex-shrink: 0;
+    }
+    .sb-nav a:hover { background: rgba(255,255,255,.08); color: #fff; }
+    .sb-nav a:hover .sb-icon { opacity: 1; }
+    .sb-nav a.active {
+      background: rgba(212,168,67,.15);
+      color: var(--gold-light);
+      border-left: 3px solid var(--gold);
+      padding-left: 7px;
+    }
+    .sb-nav a.active .sb-icon { opacity: 1; }
+
+    .sb-divider { height: 1px; background: rgba(255,255,255,.07); margin: 8px 12px; }
+
+    .sb-footer {
+      margin-top: auto;
+      padding: 12px;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+    .sb-footer a {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: 7px;
+      color: rgba(255,255,255,.5);
+      font-size: 12px; font-weight: 500;
+      text-decoration: none;
+      transition: all .15s;
+    }
+    .sb-footer a svg { width: 14px; height: 14px; }
+    .sb-footer a:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.8); }
+
+    /* ═══════════════════════════════ MAIN ═══════════════════════════════════ */
+    .p-main {
+      flex: 1; min-width: 0;
+      padding: 28px 30px 48px;
+      overflow-y: auto;
+    }
+
+    /* ─── Page header ─── */
+    .p-page-header { margin-bottom: 26px; }
+    .p-eyebrow {
+      font-size: 10px; font-weight: 700;
+      color: var(--gold);
+      letter-spacing: .14em; text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .p-page-header h1 {
+      font-size: 26px; font-weight: 800;
+      color: var(--navy); letter-spacing: -.03em;
+      line-height: 1.1; margin-bottom: 5px;
+    }
+    .p-page-header p { color: #64748b; font-size: 13px; }
+
+    /* ─── Stat cards ─── */
+    .p-stat {
+      background: #fff; border-radius: var(--radius);
+      padding: 18px 20px; border: 1px solid #e2eaf5;
+      box-shadow: var(--shadow);
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .p-stat-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .p-stat-icon svg { width: 22px; height: 22px; }
+    .p-stat-icon.navy { background: #eef2f9; color: var(--navy); }
+    .p-stat-icon.gold { background: var(--gold-pale); color: #a07a20; }
+    .p-stat-icon.green { background: #ecfdf5; color: #059669; }
+    .p-stat-icon.red { background: #fef2f2; color: #dc2626; }
+    .p-stat-icon.blue { background: #eff6ff; color: #2563eb; }
+    .p-stat-val { font-size: 28px; font-weight: 800; color: var(--navy); line-height: 1; }
+    .p-stat-label { font-size: 11px; color: #94a3b8; margin-top: 3px; font-weight: 500; }
+
+    /* ─── Cards ─── */
+    .p-card {
+      background: #fff; border-radius: var(--radius);
+      border: 1px solid #e2eaf5; box-shadow: var(--shadow);
+      margin-bottom: 22px; overflow: hidden;
+    }
+    .p-card-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #f1f5fb;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .p-card-title {
+      font-size: 13.5px; font-weight: 700; color: var(--navy);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .p-card-title svg { width: 16px; height: 16px; color: var(--gold); }
+    .p-card-body { padding: 20px; }
+    .p-card-link { font-size: 11.5px; color: var(--navy-mid); font-weight: 600; text-decoration: none; }
+    .p-card-link:hover { color: var(--gold); }
+
+    /* ─── Tables ─── */
+    .p-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .p-table th {
+      background: #f8fafd; color: #475569;
+      font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+      padding: 10px 16px; border-bottom: 2px solid #e8eef7; text-align: left;
+    }
+    .p-table td { padding: 11px 16px; border-bottom: 1px solid #f0f5fb; color: #334155; vertical-align: middle; }
+    .p-table tbody tr:hover { background: #f8fafd; }
+    .p-table tbody tr:last-child td { border-bottom: none; }
+
+    /* ─── Grade badges ─── */
+    .gb { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 7px; font-weight: 800; font-size: 13px; }
+    .gb-a { background: #ecfdf5; color: #059669; }
+    .gb-b { background: #eff6ff; color: #2563eb; }
+    .gb-c { background: #f0fdf4; color: #16a34a; }
+    .gb-d { background: #fffbeb; color: #d97706; }
+    .gb-e { background: #fff7ed; color: #ea580c; }
+    .gb-u { background: #fef2f2; color: #dc2626; }
+    .gb-- { background: #f1f5f9; color: #94a3b8; }
+
+    /* ─── Fee badges ─── */
+    .fb { padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+    .fb-paid { background: #ecfdf5; color: #059669; }
+    .fb-partial { background: #fffbeb; color: #d97706; }
+    .fb-due { background: #fef2f2; color: #dc2626; }
+
+    /* ─── Library doc types ─── */
+    .doc-type { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+    .doc-notes { background: #eff6ff; color: #2563eb; }
+    .doc-paper { background: var(--gold-pale); color: #92660a; }
+    .doc-scheme { background: #ecfdf5; color: #059669; }
+    .doc-answer { background: #f5f3ff; color: #7c3aed; }
+
+    /* ─── Action buttons ─── */
+    .p-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 7px;
+      font-size: 12px; font-weight: 700;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: all .15s; white-space: nowrap;
+    }
+    .p-btn svg { width: 14px; height: 14px; }
+    .p-btn-primary { background: var(--navy); color: #fff; }
+    .p-btn-primary:hover { background: var(--navy-mid); color: #fff; }
+    .p-btn-gold { background: var(--gold); color: var(--navy); }
+    .p-btn-gold:hover { background: var(--gold-light); color: var(--navy); }
+    .p-btn-outline { background: #fff; color: var(--navy); border: 1.5px solid #d1dde8; }
+    .p-btn-outline:hover { background: #f0f4f9; }
+    .p-btn-sm { padding: 5px 12px; font-size: 11px; }
+    .p-btn-danger { background: #fef2f2; color: #dc2626; border: 1.5px solid #fecaca; }
+    .p-btn-danger:hover { background: #dc2626; color: #fff; }
+
+    /* ─── Form controls ─── */
+    .p-label { font-size: 11.5px; font-weight: 600; color: #475569; margin-bottom: 5px; display: block; }
+    .p-input, .p-select, .p-textarea {
+      width: 100%; padding: 9px 12px; border-radius: 7px;
+      border: 1.5px solid #d1dde8; font-size: 13px;
+      font-family: inherit; color: #1e293b;
+      background: #fff; transition: border-color .15s, box-shadow .15s;
+      outline: none;
+    }
+    .p-input:focus, .p-select:focus, .p-textarea:focus {
+      border-color: var(--navy-mid);
+      box-shadow: 0 0 0 3px rgba(26,58,107,.1);
+    }
+    .p-textarea { min-height: 120px; resize: vertical; }
+
+    /* ─── Alert ─── */
+    .p-alert { padding: 12px 16px; border-radius: 8px; font-size: 12.5px; margin-bottom: 16px; }
+    .p-alert-info { background: #eff6ff; border-left: 3px solid #2563eb; color: #1e40af; }
+    .p-alert-warn { background: #fffbeb; border-left: 3px solid var(--gold); color: #92660a; }
+    .p-alert-err  { background: #fef2f2; border-left: 3px solid #dc2626; color: #991b1b; }
+    .p-alert-ok   { background: #ecfdf5; border-left: 3px solid #059669; color: #065f46; }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 900px) {
+      :root { --sidebar-w: 260px; }
+      .p-main { padding: 20px 16px 36px; }
+      .p-sidebar {
+        position: fixed;
+        top: var(--topbar-h); left: 0; bottom: 0;
+        transform: translateX(-100%);
+        width: var(--sidebar-w) !important;
+        transition: transform .22s cubic-bezier(.4,0,.2,1);
+        z-index: 999;
+      }
+      .p-sidebar.mobile-open { transform: translateX(0); }
+    }
+    @media (max-width: 580px) {
+      .p-user-pill { display: none !important; }
+      .p-page-header h1 { font-size: 20px; }
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ═══ TOPBAR ═══ -->
+<div class="p-topbar">
+  <button class="p-toggle" id="sbToggle" aria-label="Menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <a href="/" class="p-brand">
+    <img src="{% static 'school_site/images/school-crest.webp' %}" alt="crest">
+    <div class="p-brand-text">
+      <span class="p-brand-name">NGUNDU HALT</span>
+      <span class="p-brand-sub">{% block portal_type %}ACADEMIC PORTAL{% endblock %}</span>
+    </div>
+  </a>
+  <div class="p-topbar-right">
+    <div class="p-user-pill">
+      <span class="p-user-name">{{ request.user.get_full_name }}</span>
+    </div>
+    <a href="/" class="p-topbar-btn d-none d-md-flex">← Website</a>
+    <a href="{% url 'accounts:logout' %}" class="p-topbar-btn">Logout</a>
+  </div>
+</div>
+
+<div class="p-overlay" id="sbOverlay"></div>
+
+<div class="p-layout">
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="p-sidebar" id="portalSidebar">
+    <div class="p-sidebar-inner">
+      <!-- User card -->
+      <div class="sb-user-card">
+        <div class="sb-avatar-lg">{{ request.user.first_name|slice:":1"|upper }}{{ request.user.last_name|slice:":1"|upper }}</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">{{ request.user.get_full_name }}</div>
+          <div class="sb-user-role">{% block sidebar_role %}Portal User{% endblock %}</div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="sb-section">
+        <div class="sb-section-label">Menu</div>
+        <ul class="sb-nav">
+          {% block sidebar_nav %}{% endblock %}
+        </ul>
+      </div>
+
+      <div class="sb-divider"></div>
+      <div class="sb-section">
+        <div class="sb-section-label">Account</div>
+        <ul class="sb-nav">
+          <li>
+            <a href="/">
+              <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <span class="sb-label">School Website</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'accounts:logout' %}">
+              <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              <span class="sb-label">Sign Out</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sb-footer">
+        <div style="font-size:10px; color:rgba(255,255,255,.25); padding:4px 10px;">© 2026 Ngundu Halt Govt High School</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="p-main">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="p-alert p-alert-{% if message.tags == 'error' %}err{% elif message.tags == 'warning' %}warn{% elif message.tags == 'success' %}ok{% else %}info{% endif %} mb-3">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<script src="{% static 'school_site/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script>
+(function(){
+  const toggle = document.getElementById('sbToggle');
+  const sidebar = document.getElementById('portalSidebar');
+  const overlay = document.getElementById('sbOverlay');
+  const mobile = () => window.innerWidth <= 900;
+
+  toggle.addEventListener('click', () => {
+    if (mobile()) {
+      sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('show');
+    } else {
+      sidebar.classList.toggle('collapsed');
+    }
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  });
+})();
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

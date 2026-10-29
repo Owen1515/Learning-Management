@@ -1,0 +1,15 @@
+/* Hide only the Jazzmin version label in the admin footer. */
+.app-footer > .float-end {
+    display: none !important;
+}
+
+/* Top bar: replace the non-working user dropdown toggle with an inline Log out. */
+.navbar-nav.ms-auto > li.dropdown:last-child > a.nav-link { display: none !important; }
+#jazzy-usermenu {
+    display: flex !important; position: static !important; transform: none !important;
+    min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none;
+}
+#jazzy-usermenu .dropdown-divider,
+#jazzy-usermenu a.dropdown-item,
+#jazzy-usermenu .dropdown-footer { display: none !important; }
+#jazzy-usermenu .dropdown-item { width: auto; color: inherit; }

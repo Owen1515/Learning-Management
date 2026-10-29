@@ -107,5 +107,33 @@ class StudentProfile(models.Model):
         blank=True
     )
 
+    guardian_name = models.CharField(
+        max_length=150,
+        blank=True
+    )
+
+    guardian_relationship = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    guardian_phone = models.CharField(
+        max_length=20,
+        blank=True
+    )
+
+    guardian_email = models.EmailField(
+        blank=True
+    )
+
+    home_address = models.TextField(
+        blank=True
+    )
+
+    previous_school = models.CharField(
+        max_length=150,
+        blank=True
+    )
+
     def __str__(self):
         return f"{self.student_number} - {self.first_name} {self.last_name}"

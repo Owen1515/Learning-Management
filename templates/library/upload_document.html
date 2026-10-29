@@ -1,0 +1,97 @@
+{% extends "accounts/portal_base.html" %}
+{% load static %}
+{% block title %}{% if doc %}Edit Document{% else %}Add Document{% endif %} | Library{% endblock %}
+{% block portal_type %}TEACHER PORTAL{% endblock %}
+{% block sidebar_role %}Teacher{% endblock %}
+
+{% block sidebar_nav %}
+<li><a href="{% url 'accounts:teacher_dashboard' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  <span class="sb-label">Dashboard</span>
+</a></li>
+<li><a href="{% url 'library:teacher_library' %}" class="active">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  <span class="sb-label">Library Manager</span>
+</a></li>
+<li><a href="{% url 'library:marking_scheme_generator' %}">
+  <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/></svg>
+  <span class="sb-label">AI Mark Scheme</span>
+</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="p-page-header">
+  <a href="{% url 'library:teacher_library' %}" class="p-btn p-btn-outline p-btn-sm" style="margin-bottom:14px;">← Back to Library</a>
+  <div class="p-eyebrow">Library Manager</div>
+  <h1>{% if doc %}Edit Document{% else %}Add New Document{% endif %}</h1>
+  <p>Provide either a file upload, typed content, or both.</p>
+</div>
+
+<div class="p-card">
+  <div class="p-card-body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="p-label">Title *</label>
+          {{ form.title }}
+        </div>
+        <div class="col-md-4">
+          <label class="p-label">Document Type *</label>
+          {{ form.doc_type }}
+        </div>
+        <div class="col-md-6">
+          <label class="p-label">Subject *</label>
+          {{ form.subject }}
+        </div>
+        <div class="col-md-6">
+          <label class="p-label">Form Level</label>
+          {{ form.level }}
+        </div>
+        <div class="col-12">
+          <label class="p-label">Description</label>
+          {{ form.description }}
+        </div>
+
+        <!-- File upload section -->
+        <div class="col-12">
+          <div style="background:#f8fafd;border:1px solid #e2eaf5;border-radius:8px;padding:16px 20px;">
+            <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+              <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Option A — Upload a File (PDF, Word, Image)
+            </div>
+            {{ form.file }}
+          </div>
+        </div>
+
+        <div class="col-12" style="text-align:center;color:#94a3b8;font-size:11px;font-weight:600;margin:-6px 0;">— OR —</div>
+
+        <!-- Typed content section -->
+        <div class="col-12">
+          <div style="background:#f8fafd;border:1px solid #e2eaf5;border-radius:8px;padding:16px 20px;">
+            <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+              <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              Option B — Type / Paste Content Directly
+            </div>
+            {{ form.content }}
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 0;">
+            {{ form.is_visible }}
+            <label style="font-size:13px;font-weight:600;color:#334155;cursor:pointer;">Make visible to students immediately</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;padding-top:20px;border-top:1px solid #e2eaf5;">
+        <button type="submit" class="p-btn p-btn-gold">
+          {% if doc %}Save Changes{% else %}Add to Library{% endif %}
+        </button>
+        <a href="{% url 'library:teacher_library' %}" class="p-btn p-btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
