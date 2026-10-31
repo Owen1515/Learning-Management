@@ -12,6 +12,7 @@ from .models import (
     Subject,
     StudentEnrollment,
     TeacherAssignment,
+    ContactInquiry,
 )
 
 
@@ -196,3 +197,12 @@ class TeacherAssignmentAdmin(admin.ModelAdmin):
         "subject__name",
         "subject__code",
     )
+
+
+@admin.register(ContactInquiry)
+class ContactInquiryAdmin(admin.ModelAdmin):
+    list_display = ("name", "email", "topic", "status", "created_at")
+    list_filter = ("status", "topic", "created_at")
+    search_fields = ("name", "email", "phone", "message")
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)

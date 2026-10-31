@@ -14,6 +14,7 @@ A role-based academic management web application built with **Python, Django, Po
 - Student dashboard with published grades
 - Term-specific printable report cards
 - School profile, logo, contact information and branding
+- Public school enquiries stored in a staff-managed contact inbox
 - Attendance, form-teacher comments and principal comments
 - PostgreSQL persistence through Django ORM
 - Environment-variable configuration for secrets

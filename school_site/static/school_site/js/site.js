@@ -145,27 +145,65 @@
     });
   }
 
-  // Front-end validation for the presentation-only contact form.
+  // Submit the school contact form to Django and report saved/error states inline.
   const contactForm = document.getElementById("contactForm");
   if (contactForm) {
-    contactForm.addEventListener("submit", (event) => {
+    const feedback = document.getElementById("contactFeedback");
+    const intro = contactForm.closest(".contact-form-card")?.querySelector(".contact-form-heading p");
+    if (intro) intro.textContent = "Your enquiry is saved for authorised school staff to review and follow up.";
+
+    const botTrap = document.createElement("input");
+    botTrap.type = "text";
+    botTrap.name = "website";
+    botTrap.tabIndex = -1;
+    botTrap.autocomplete = "off";
+    botTrap.setAttribute("aria-hidden", "true");
+    botTrap.style.position = "absolute";
+    botTrap.style.left = "-10000px";
+    contactForm.append(botTrap);
+
+    contactForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      event.stopPropagation();
       contactForm.classList.add("was-validated");
-      const feedback = document.getElementById("contactFeedback");
       if (!contactForm.checkValidity()) {
         if (feedback) {
           feedback.className = "form-feedback mt-3 is-visible";
-          feedback.textContent = "Please complete the required fields. This preview validates the form locally only.";
+          feedback.textContent = "Please complete the required fields with valid details.";
         }
         return;
       }
-      if (feedback) {
-        feedback.className = "form-feedback mt-3 is-visible";
-        feedback.textContent = "Thank you. This demo form is not connected to email or storage yet; the Django backend will handle submissions after integration.";
+
+      const csrfCookie = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("csrftoken="));
+      const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.slice("csrftoken=".length)) : "";
+      try {
+        const response = await fetch(contactForm.action || window.location.pathname, {
+          method: "POST",
+          body: new FormData(contactForm),
+          credentials: "same-origin",
+          headers: { "X-CSRFToken": csrfToken },
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          const errors = Object.values(result.errors || {}).flat().join(" ");
+          if (feedback) {
+            feedback.className = "form-feedback mt-3 is-visible";
+            feedback.textContent = errors || "We could not submit your enquiry. Please review the fields and try again.";
+          }
+          return;
+        }
+
+        if (feedback) {
+          feedback.className = "form-feedback mt-3 is-visible";
+          feedback.textContent = result.message;
+        }
+        contactForm.reset();
+        contactForm.classList.remove("was-validated");
+      } catch (error) {
+        if (feedback) {
+          feedback.className = "form-feedback mt-3 is-visible";
+          feedback.textContent = "The enquiry could not reach the school server. Please try again later.";
+        }
       }
-      contactForm.reset();
-      contactForm.classList.remove("was-validated");
     });
   }
 

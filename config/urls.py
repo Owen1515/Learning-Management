@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.static import serve
+from academics.views import school_contact
 
 urlpatterns = [
     path(
@@ -63,11 +64,7 @@ urlpatterns = [
         TemplateView.as_view(template_name="school_site/admissions.html"),
         name="school_admissions"
     ),
-    path(
-        "contact/",
-        TemplateView.as_view(template_name="school_site/contact.html"),
-        name="school_contact"
-    ),
+    path("contact/", school_contact, name="school_contact"),
     path(
         "ict/",
         TemplateView.as_view(template_name="school_site/ict.html"),
