@@ -88,6 +88,7 @@ class EcoCashPaymentAttempt(models.Model):
         ("FAILED", "Failed"),
         ("DEMO", "Demo pending"),
         ("DEMO_PAID", "Demo complete (not paid)"),
+        ("DEMO_FAILED", "Demo failed (not paid)"),
     ]
 
     student = models.ForeignKey(
@@ -106,7 +107,7 @@ class EcoCashPaymentAttempt(models.Model):
     payer_email = models.EmailField(blank=True)
     reference = models.CharField(max_length=32, unique=True)
     poll_url = models.URLField(max_length=500, blank=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="PENDING")
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="PENDING")
     fee_payment = models.OneToOneField(
         FeePayment,
         on_delete=models.SET_NULL,

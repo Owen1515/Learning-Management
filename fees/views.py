@@ -145,7 +145,6 @@ def fees_overview(request):
 
 def ecocash_checkout(request):
     form = EcoCashCheckoutForm(request.POST or None)
-    form.fields["payer_email"].initial = settings.PAYNOW_AUTH_EMAIL
     errors = []
 
     if request.method == "POST" and form.is_valid():
@@ -187,7 +186,7 @@ def ecocash_checkout(request):
                         if data["amount"] > remaining:
                             errors.append("The amount is greater than the remaining USD balance for this term.")
                         else:
-                            demo_mode = settings.DEBUG and settings.PAYMENTS_DEMO_MODE
+                            demo_mode = settings.PAYMENTS_DEMO_MODE
                             attempt = EcoCashPaymentAttempt.objects.create(
                                 student=locked_student,
                                 term=schedule.term,
@@ -220,11 +219,10 @@ def ecocash_checkout(request):
     return render(request, "fees/ecocash_checkout.html", {
         "form": form,
         "errors": errors,
-        "demo_mode": settings.DEBUG and settings.PAYMENTS_DEMO_MODE,
+        "demo_mode": settings.PAYMENTS_DEMO_MODE,
         "gateway_configured": bool(settings.PAYNOW_INTEGRATION_ID and settings.PAYNOW_INTEGRATION_KEY),
         "receiver_name": settings.ECOCASH_RECEIVER_NAME,
         "receiver_phone": settings.ECOCASH_RECEIVER_PHONE,
-        "default_email": settings.PAYNOW_AUTH_EMAIL,
     })
 
 
@@ -233,7 +231,7 @@ def ecocash_payment_status(request, reference):
     instructions = request.session.pop(f"ecocash_instructions_{reference}", "")
     if request.method == "POST":
         if attempt.status == "DEMO":
-            complete_demo_payment(attempt)
+            complete_demo_payment(attempt, request.POST.get("demo_result", "paid"))
         elif attempt.status == "PENDING":
             attempt = refresh_ecocash_attempt(request, attempt)
     return render(request, "fees/ecocash_status.html", {

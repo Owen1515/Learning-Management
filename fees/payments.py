@@ -28,9 +28,8 @@ def _callback_url(request, configured_url, route_name, reference):
 def _paynow(request, reference):
     integration_id = settings.PAYNOW_INTEGRATION_ID
     integration_key = settings.PAYNOW_INTEGRATION_KEY
-    auth_email = settings.PAYNOW_AUTH_EMAIL
-    if not integration_id or not integration_key or not auth_email:
-        raise ImproperlyConfigured("Paynow merchant credentials are not configured.")
+    if not integration_id or not integration_key:
+        raise ImproperlyConfigured("Paynow integration credentials are not configured.")
 
     return Paynow(
         integration_id,
@@ -45,7 +44,7 @@ def start_ecocash_payment(request, attempt):
         paynow = _paynow(request, attempt.reference)
         payment = paynow.create_payment(
             attempt.reference,
-            attempt.payer_email or settings.PAYNOW_AUTH_EMAIL,
+            attempt.payer_email,
         )
         payment.add(f"School fees {attempt.term}", attempt.amount)
         response = paynow.send_mobile(payment, attempt.payer_phone, "ecocash")
@@ -109,11 +108,14 @@ def refresh_ecocash_attempt(request, attempt):
     return attempt
 
 
-def complete_demo_payment(attempt):
-    if not settings.DEBUG or not settings.PAYMENTS_DEMO_MODE:
-        raise ImproperlyConfigured("Demo payments are only available when explicitly enabled in development.")
+def complete_demo_payment(attempt, outcome="paid"):
+    if not settings.PAYMENTS_DEMO_MODE:
+        raise ImproperlyConfigured("Demo payments are not enabled.")
+    if outcome not in {"paid", "failed"}:
+        raise ValueError("Invalid demo payment outcome.")
+    status = "DEMO_PAID" if outcome == "paid" else "DEMO_FAILED"
     EcoCashPaymentAttempt.objects.filter(pk=attempt.pk, status="DEMO").update(
-        status="DEMO_PAID", updated_at=timezone.now()
+        status=status, updated_at=timezone.now()
     )
     attempt.refresh_from_db()
     return attempt

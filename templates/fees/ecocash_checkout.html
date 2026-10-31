@@ -54,7 +54,7 @@
       <p class="text-secondary mb-3">Verify the learner using the student number and guardian phone registered with the school.</p>
 
       {% if demo_mode %}
-      <div class="pay-alert pay-demo"><strong>Demo mode:</strong> this is a payment-flow test only. No EcoCash request is sent, no money moves, and simulated payments are not added to the school fee ledger.</div>
+      <div class="pay-alert pay-demo"><strong>Demo mode:</strong> this is a payment-flow test only. No EcoCash request is sent, no money moves, and simulated outcomes are not added to the school fee ledger. Each payer can enter their own contact details.</div>
       <div class="pay-recipient"><strong>Configured display recipient:</strong> {{ receiver_name }} · {{ receiver_phone }}<br><span class="text-secondary">Display only. Live settlement must be configured on the school's Paynow merchant account.</span></div>
       {% elif not gateway_configured %}
       <div class="pay-alert pay-info">Online EcoCash payments are not active yet. The school must configure its Paynow merchant integration before accepting real payments.</div>

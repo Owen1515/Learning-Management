@@ -14,7 +14,7 @@ from .models import EcoCashPaymentAttempt, FeePayment, TermFee
 from .payments import refresh_ecocash_attempt
 
 
-@override_settings(DEBUG=True, PAYMENTS_DEMO_MODE=True)
+@override_settings(DEBUG=False, PAYMENTS_DEMO_MODE=True)
 class EcoCashCheckoutTests(TestCase):
     def setUp(self):
         user = User.objects.create_user(username="test-student", password="test-pass")
@@ -69,6 +69,29 @@ class EcoCashCheckoutTests(TestCase):
         self.assertEqual(response.status_code, 200)
         attempt.refresh_from_db()
         self.assertEqual(attempt.status, "DEMO_PAID")
+        self.assertEqual(FeePayment.objects.count(), 0)
+
+    def test_demo_form_is_editable_with_debug_disabled_and_has_no_email_default(self):
+        response = self.client.get(reverse("fees:ecocash_checkout"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Demo mode:")
+        self.assertNotContains(response, "<fieldset disabled>", html=False)
+        self.assertContains(response, 'name="payer_email"')
+        self.assertNotContains(response, "samuelfifitini0@gmail.com")
+
+    def test_demo_decline_is_not_a_real_payment(self):
+        self.client.post(reverse("fees:ecocash_checkout"), self.checkout_data())
+        attempt = EcoCashPaymentAttempt.objects.get()
+
+        response = self.client.post(
+            reverse("fees:payment_status", args=[attempt.reference]),
+            {"demo_result": "failed"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        attempt.refresh_from_db()
+        self.assertEqual(attempt.status, "DEMO_FAILED")
         self.assertEqual(FeePayment.objects.count(), 0)
 
     def test_guardian_phone_must_match_school_record(self):

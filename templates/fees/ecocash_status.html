@@ -57,10 +57,16 @@
       {% if attempt.status == "PAID" %}
       <div class="pay-alert pay-success">Paynow confirmed this EcoCash payment. The payment has been added to the school fee ledger.</div>
       {% elif attempt.status == "DEMO" %}
-      <div class="pay-alert pay-demo"><strong>Demo only:</strong> no money moved and the fee ledger will not change. Use the button only to test the confirmation screen.</div>
-      <form method="post">{% csrf_token %}<button class="pay-action" type="submit">Simulate a successful response</button></form>
+      <div class="pay-alert pay-demo"><strong>Demo only:</strong> no EcoCash request was sent, no money moved, and the fee ledger will not change. Live EcoCash approval happens through the provider's phone prompt; this site never asks for a wallet PIN.</div>
+      <form method="post" class="d-flex flex-wrap gap-2">
+        {% csrf_token %}
+        <button class="pay-action" type="submit" name="demo_result" value="paid">Simulate approval</button>
+        <button class="pay-action" type="submit" name="demo_result" value="failed">Simulate decline</button>
+      </form>
       {% elif attempt.status == "DEMO_PAID" %}
       <div class="pay-alert pay-demo"><strong>Demo completed.</strong> This is not a real payment and has not been recorded against school fees.</div>
+      {% elif attempt.status == "DEMO_FAILED" %}
+      <div class="pay-alert pay-error"><strong>Demo declined.</strong> This is a simulated result, not a response from EcoCash or Paynow. No fee payment was recorded.</div>
       {% elif attempt.status == "FAILED" %}
       <div class="pay-alert pay-error">This EcoCash request was not completed. You can start a new payment from the checkout page.</div>
       {% else %}
