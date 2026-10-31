@@ -17,6 +17,11 @@ class PaymentGatewayError(Exception):
     pass
 
 
+def _is_paynow_url(value):
+    hostname = (urlsplit(value).hostname or "").lower()
+    return hostname == "paynow.co.zw" or hostname.endswith(".paynow.co.zw")
+
+
 def _callback_url(request, configured_url, route_name, reference):
     base_url = configured_url or request.build_absolute_uri(reverse(route_name))
     parts = urlsplit(base_url)
@@ -58,13 +63,37 @@ def start_ecocash_payment(request, attempt):
         logger.warning("Paynow rejected EcoCash initiation for %s", attempt.reference)
         raise PaymentGatewayError("Paynow could not start this payment. Check the EcoCash number and try again.")
 
-    poll_host = urlsplit(response.poll_url).hostname or ""
-    if not (poll_host == "paynow.co.zw" or poll_host.endswith(".paynow.co.zw")):
+    if not _is_paynow_url(response.poll_url):
         raise PaymentGatewayError("Paynow returned an invalid payment status address.")
 
     attempt.poll_url = response.poll_url
     attempt.save(update_fields=["poll_url", "updated_at"])
     return getattr(response, "instructions", "Approve the payment prompt on your EcoCash phone.")
+
+
+def start_paynow_checkout(request, attempt):
+    try:
+        paynow = _paynow(request, attempt.reference)
+        payment = paynow.create_payment(attempt.reference, attempt.payer_email)
+        payment.add(f"School fees {attempt.term}", attempt.amount)
+        response = paynow.send(payment)
+    except ImproperlyConfigured:
+        raise
+    except Exception as exc:
+        logger.exception("Paynow hosted checkout failed for %s", attempt.reference)
+        raise PaymentGatewayError("The Paynow checkout could not be started. Please try again later.") from exc
+
+    if not response.success or not getattr(response, "has_redirect", False):
+        raise PaymentGatewayError("Paynow could not open its hosted checkout for this payment.")
+
+    redirect_url = getattr(response, "redirect_url", "")
+    poll_url = getattr(response, "poll_url", "")
+    if not _is_paynow_url(redirect_url) or not _is_paynow_url(poll_url):
+        raise PaymentGatewayError("Paynow returned an invalid checkout or status address.")
+
+    attempt.poll_url = poll_url
+    attempt.save(update_fields=["poll_url", "updated_at"])
+    return redirect_url
 
 
 def refresh_ecocash_attempt(request, attempt):
@@ -91,7 +120,7 @@ def refresh_ecocash_attempt(request, attempt):
                 term=locked_attempt.term,
                 amount=locked_attempt.amount,
                 currency=locked_attempt.currency,
-                payment_method="ECOCASH",
+                payment_method=locked_attempt.payment_method,
                 reference=locked_attempt.reference,
                 payment_date=timezone.localdate(),
                 recorded_by="Paynow EcoCash",

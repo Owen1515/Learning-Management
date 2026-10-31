@@ -24,8 +24,11 @@
     .pay-panel { background: #fff; border: 1px solid #dfe5ec; border-radius: 6px; box-shadow: 0 8px 28px rgba(17,46,98,.07); padding: 28px; }
     .pay-panel h1 { color: var(--pay-navy); font-size: 26px; font-weight: 800; margin: 0 0 8px; }
     .pay-label { display: block; font-size: 12px; font-weight: 700; margin: 16px 0 6px; }
-    .pay-panel input, .pay-panel select { width: 100%; min-height: 44px; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; }
+    .pay-panel input:not([type="radio"]), .pay-panel select { width: 100%; min-height: 44px; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; }
     .pay-panel input:focus, .pay-panel select:focus { outline: 3px solid rgba(211,166,64,.25); border-color: var(--pay-gold); }
+    .pay-panel input[type="radio"] { width: auto; min-height: 0; }
+    .pay-field[hidden] { display: none !important; }
+    .pay-help { color: #64748b; font-size: 12px; line-height: 1.5; margin-top: 6px; }
     .pay-action { min-height: 46px; background: var(--pay-navy); color: #fff; border: 0; border-radius: 4px; padding: 10px 18px; font-weight: 700; }
     .pay-action:hover { background: #1b457f; color: #fff; }
     .pay-alert { padding: 13px 15px; border-radius: 4px; margin: 16px 0; font-size: 13px; }
@@ -50,8 +53,8 @@
   <main class="pay-main">
     <div class="pay-heading"><p>Secure school-fee checkout</p></div>
     <section class="pay-panel">
-      <h1>Pay fees with EcoCash</h1>
-      <p class="text-secondary mb-3">Verify the learner using the student number and guardian phone registered with the school.</p>
+      <h1>Pay school fees</h1>
+      <p class="text-secondary mb-3">Choose a payment option, then verify the learner using the student number and guardian phone registered with the school.</p>
 
       {% if demo_mode %}
       <div class="pay-alert pay-demo"><strong>Demo mode:</strong> this is a payment-flow test only. No EcoCash request is sent, no money moves, and simulated outcomes are not added to the school fee ledger. Each payer can enter their own contact details.</div>
@@ -67,15 +70,30 @@
         {% csrf_token %}
         <fieldset {% if not demo_mode and not gateway_configured %}disabled{% endif %}>
           {% for field in form %}
+          <div class="pay-field" {% if field.name == "payer_phone" %}data-ecocash-phone{% endif %}>
           <label class="pay-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
           {{ field }}
           {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+          {% if field.name == "payment_method" %}<p class="pay-help">Paynow will show only the bank, card, and other methods enabled for the school's merchant account. Availability of Zimswitch or any other method must be confirmed with Paynow.</p>{% endif %}
+          </div>
           {% endfor %}
-          <button class="pay-action w-100 mt-4" type="submit">{% if demo_mode %}Start demo payment{% else %}Send EcoCash prompt{% endif %}</button>
+          <button class="pay-action w-100 mt-4" type="submit">{% if demo_mode %}Start demo payment{% else %}Continue to payment{% endif %}</button>
         </fieldset>
       </form>
     </section>
     <p class="pay-footer">Only published USD fees are accepted through this EcoCash checkout. For account assistance, contact the school office.</p>
   </main>
+  <script>
+    const methodSelect = document.getElementById("id_payment_method");
+    const ecocashPhoneField = document.querySelector("[data-ecocash-phone]");
+    const ecocashPhoneInput = ecocashPhoneField?.querySelector("input");
+    function updatePaymentFields() {
+      const needsPhone = methodSelect?.value === "ECOCASH";
+      if (ecocashPhoneField) ecocashPhoneField.hidden = !needsPhone;
+      if (ecocashPhoneInput) ecocashPhoneInput.required = needsPhone;
+    }
+    methodSelect?.addEventListener("change", updatePaymentFields);
+    updatePaymentFields();
+  </script>
 </body>
 </html>

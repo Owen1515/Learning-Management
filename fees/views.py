@@ -19,6 +19,7 @@ from .payments import (
     complete_demo_payment,
     refresh_ecocash_attempt,
     start_ecocash_payment,
+    start_paynow_checkout,
 )
 
 
@@ -194,6 +195,7 @@ def ecocash_checkout(request):
                                 currency="USD",
                                 payer_phone=data["payer_phone"],
                                 payer_email=data["payer_email"],
+                                payment_method=data["payment_method"],
                                 reference=f"NH{uuid.uuid4().hex[:22].upper()}",
                                 status="DEMO" if demo_mode else "PENDING",
                             )
@@ -203,8 +205,12 @@ def ecocash_checkout(request):
             if attempt and not errors:
                 if attempt.status == "PENDING":
                     try:
-                        instructions = start_ecocash_payment(request, attempt)
-                        request.session[f"ecocash_instructions_{attempt.reference}"] = instructions
+                        if attempt.payment_method == "ECOCASH":
+                            instructions = start_ecocash_payment(request, attempt)
+                            request.session[f"ecocash_instructions_{attempt.reference}"] = instructions
+                        else:
+                            checkout_url = start_paynow_checkout(request, attempt)
+                            return redirect(checkout_url)
                     except PaymentGatewayError as exc:
                         attempt.status = "FAILED"
                         attempt.save(update_fields=["status", "updated_at"])

@@ -44,6 +44,7 @@ PAYMENT_METHOD_CHOICES = [
     ("CASH", "Cash"),
     ("BANK", "Bank Transfer"),
     ("ECOCASH", "EcoCash"),
+    ("PAYNOW", "Paynow Checkout"),
     ("INNBUCKS", "InnBucks"),
     ("OTHER", "Other"),
 ]
@@ -103,8 +104,13 @@ class EcoCashPaymentAttempt(models.Model):
     )
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES)
-    payer_phone = models.CharField(max_length=20)
+    payer_phone = models.CharField(max_length=20, blank=True)
     payer_email = models.EmailField(blank=True)
+    payment_method = models.CharField(
+        max_length=20,
+        choices=[("ECOCASH", "EcoCash mobile prompt"), ("PAYNOW", "Paynow hosted checkout")],
+        default="ECOCASH",
+    )
     reference = models.CharField(max_length=32, unique=True)
     poll_url = models.URLField(max_length=500, blank=True)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="PENDING")

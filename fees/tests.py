@@ -45,6 +45,7 @@ class EcoCashCheckoutTests(TestCase):
 
     def checkout_data(self, **overrides):
         return {
+            "payment_method": "ECOCASH",
             "student_number": self.student.student_number,
             "guardian_phone": "0771234567",
             "fee_schedule": str(self.schedule.pk),
@@ -93,6 +94,35 @@ class EcoCashCheckoutTests(TestCase):
         attempt.refresh_from_db()
         self.assertEqual(attempt.status, "DEMO_FAILED")
         self.assertEqual(FeePayment.objects.count(), 0)
+
+    def test_paynow_demo_option_does_not_require_a_mobile_number(self):
+        response = self.client.post(
+            reverse("fees:ecocash_checkout"),
+            self.checkout_data(payment_method="PAYNOW", payer_phone=""),
+        )
+
+        self.assertEqual(response.status_code, 302)
+        attempt = EcoCashPaymentAttempt.objects.get()
+        self.assertEqual(attempt.payment_method, "PAYNOW")
+        self.assertEqual(attempt.status, "DEMO")
+        self.assertEqual(FeePayment.objects.count(), 0)
+
+    def test_live_paynow_option_redirects_to_hosted_checkout(self):
+        with override_settings(PAYMENTS_DEMO_MODE=False):
+            with patch("fees.views.start_paynow_checkout", return_value="https://www.paynow.co.zw/checkout/test"):
+                response = self.client.post(
+                    reverse("fees:ecocash_checkout"),
+                    self.checkout_data(payment_method="PAYNOW", payer_phone=""),
+                )
+
+        self.assertRedirects(
+            response,
+            "https://www.paynow.co.zw/checkout/test",
+            fetch_redirect_response=False,
+        )
+        attempt = EcoCashPaymentAttempt.objects.get()
+        self.assertEqual(attempt.payment_method, "PAYNOW")
+        self.assertEqual(attempt.status, "PENDING")
 
     def test_guardian_phone_must_match_school_record(self):
         response = self.client.post(
