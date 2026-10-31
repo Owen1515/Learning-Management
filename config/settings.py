@@ -100,6 +100,17 @@ LOGIN_URL = "accounts:login"
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+PAYNOW_INTEGRATION_ID = os.getenv("PAYNOW_INTEGRATION_ID", "")
+PAYNOW_INTEGRATION_KEY = os.getenv("PAYNOW_INTEGRATION_KEY", "")
+PAYNOW_AUTH_EMAIL = os.getenv("PAYNOW_AUTH_EMAIL", "samuelfifitini0@gmail.com")
+PAYNOW_RETURN_URL = os.getenv("PAYNOW_RETURN_URL", "")
+PAYNOW_RESULT_URL = os.getenv("PAYNOW_RESULT_URL", "")
+ECOCASH_RECEIVER_NAME = os.getenv("ECOCASH_RECEIVER_NAME", "Samuel Owen Fifitini")
+ECOCASH_RECEIVER_PHONE = os.getenv("ECOCASH_RECEIVER_PHONE", "+263782649111")
+PAYMENTS_DEMO_MODE = os.getenv(
+    "PAYMENTS_DEMO_MODE", "true" if DEBUG else "false"
+).lower() in {"1", "true", "yes", "on"}
+
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

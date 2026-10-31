@@ -1,8 +1,25 @@
-from django.shortcuts import render
-from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import Sum
-from .models import TermFee, FeePayment
 import json
+import uuid
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+from accounts.models import StudentProfile
+from .forms import EcoCashCheckoutForm, normalize_zimbabwe_phone
+from .models import EcoCashPaymentAttempt, TermFee, FeePayment
+from .payments import (
+    PaymentGatewayError,
+    complete_demo_payment,
+    refresh_ecocash_attempt,
+    start_ecocash_payment,
+)
 
 
 @staff_member_required
@@ -124,3 +141,120 @@ def fees_overview(request):
         "term_chart_data":     json.dumps({"labels": term_labels, "billed": term_billed_data, "collected": term_collected_data}),
         "status_chart_data":   json.dumps({"paid": paid_n, "partial": partial_n, "due": due_n}),
     })
+
+
+def ecocash_checkout(request):
+    form = EcoCashCheckoutForm(request.POST or None)
+    form.fields["payer_email"].initial = settings.PAYNOW_AUTH_EMAIL
+    errors = []
+
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        student = StudentProfile.objects.filter(
+            student_number__iexact=data["student_number"].strip()
+        ).first()
+        try:
+            recorded_phone = normalize_zimbabwe_phone(student.guardian_phone) if student else ""
+        except ValidationError:
+            recorded_phone = ""
+
+        if not student or recorded_phone != data["guardian_phone"]:
+            errors.append("We could not verify those details. Check them with the school office.")
+        else:
+            attempt = None
+            try:
+                with transaction.atomic():
+                    locked_student = StudentProfile.objects.select_for_update().get(pk=student.pk)
+                    schedule = TermFee.objects.select_for_update().filter(
+                        pk=data["fee_schedule"].pk,
+                        is_published=True,
+                    ).select_related("term").first()
+                    if not schedule:
+                        errors.append("That fee schedule is no longer available.")
+                    else:
+                        paid = FeePayment.objects.filter(
+                            student=locked_student,
+                            term=schedule.term,
+                            currency="USD",
+                        ).aggregate(total=Sum("amount"))["total"] or 0
+                        pending = EcoCashPaymentAttempt.objects.filter(
+                            student=locked_student,
+                            term=schedule.term,
+                            currency="USD",
+                            status="PENDING",
+                        ).aggregate(total=Sum("amount"))["total"] or 0
+                        remaining = schedule.total_usd - paid - pending
+                        if data["amount"] > remaining:
+                            errors.append("The amount is greater than the remaining USD balance for this term.")
+                        else:
+                            demo_mode = settings.DEBUG and settings.PAYMENTS_DEMO_MODE
+                            attempt = EcoCashPaymentAttempt.objects.create(
+                                student=locked_student,
+                                term=schedule.term,
+                                amount=data["amount"],
+                                currency="USD",
+                                payer_phone=data["payer_phone"],
+                                payer_email=data["payer_email"],
+                                reference=f"NH{uuid.uuid4().hex[:22].upper()}",
+                                status="DEMO" if demo_mode else "PENDING",
+                            )
+            except Exception:
+                errors.append("We could not start this payment. Please try again or contact the school.")
+
+            if attempt and not errors:
+                if attempt.status == "PENDING":
+                    try:
+                        instructions = start_ecocash_payment(request, attempt)
+                        request.session[f"ecocash_instructions_{attempt.reference}"] = instructions
+                    except PaymentGatewayError as exc:
+                        attempt.status = "FAILED"
+                        attempt.save(update_fields=["status", "updated_at"])
+                        errors.append(str(exc))
+                    except Exception:
+                        attempt.status = "FAILED"
+                        attempt.save(update_fields=["status", "updated_at"])
+                        errors.append("Online payments are not configured yet. Contact the school office.")
+                if not errors:
+                    return redirect("fees:payment_status", reference=attempt.reference)
+
+    return render(request, "fees/ecocash_checkout.html", {
+        "form": form,
+        "errors": errors,
+        "demo_mode": settings.DEBUG and settings.PAYMENTS_DEMO_MODE,
+        "gateway_configured": bool(settings.PAYNOW_INTEGRATION_ID and settings.PAYNOW_INTEGRATION_KEY),
+        "receiver_name": settings.ECOCASH_RECEIVER_NAME,
+        "receiver_phone": settings.ECOCASH_RECEIVER_PHONE,
+        "default_email": settings.PAYNOW_AUTH_EMAIL,
+    })
+
+
+def ecocash_payment_status(request, reference):
+    attempt = get_object_or_404(EcoCashPaymentAttempt, reference=reference)
+    instructions = request.session.pop(f"ecocash_instructions_{reference}", "")
+    if request.method == "POST":
+        if attempt.status == "DEMO":
+            complete_demo_payment(attempt)
+        elif attempt.status == "PENDING":
+            attempt = refresh_ecocash_attempt(request, attempt)
+    return render(request, "fees/ecocash_status.html", {
+        "attempt": attempt,
+        "instructions": instructions,
+        "is_demo": attempt.status in {"DEMO", "DEMO_PAID"},
+    })
+
+
+def ecocash_payment_return(request):
+    reference = request.GET.get("reference", "")
+    if reference and EcoCashPaymentAttempt.objects.filter(reference=reference).exists():
+        return redirect("fees:payment_status", reference=reference)
+    return redirect("fees:ecocash_checkout")
+
+
+@csrf_exempt
+@require_POST
+def paynow_result(request):
+    reference = request.POST.get("reference", "")
+    attempt = EcoCashPaymentAttempt.objects.filter(reference=reference).first()
+    if attempt and attempt.status == "PENDING":
+        refresh_ecocash_attempt(request, attempt)
+    return HttpResponse(status=204)

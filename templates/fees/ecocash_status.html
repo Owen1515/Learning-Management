@@ -1,0 +1,74 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#112e62">
+  <title>Payment Status | Ngundu Halt Government High School</title>
+  <link rel="icon" type="image/webp" href="{% static 'school_site/images/school-crest.webp' %}">
+  <link rel="stylesheet" href="{% static 'school_site/vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'school_site/css/styles.css' %}">
+  <style>
+    :root { --pay-navy: #112e62; --pay-gold: #d3a640; }
+    body { background: #f3f5f7; color: #203047; }
+    .pay-header { background: #fff; border-bottom: 3px solid var(--pay-gold); }
+    .pay-header-inner { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .pay-brand { display: flex; align-items: center; gap: 12px; color: var(--pay-navy); text-decoration: none; }
+    .pay-brand img { width: 48px; height: 48px; object-fit: contain; }
+    .pay-brand strong { display: block; font-size: 15px; letter-spacing: .04em; }
+    .pay-brand span { display: block; font-size: 10px; font-weight: 700; color: #64748b; }
+    .pay-main { width: min(100% - 32px, 660px); margin: 42px auto 64px; }
+    .pay-panel { background: #fff; border: 1px solid #dfe5ec; border-radius: 6px; box-shadow: 0 8px 28px rgba(17,46,98,.07); padding: 30px; }
+    .pay-panel h1 { color: var(--pay-navy); font-size: 26px; font-weight: 800; }
+    .pay-meta { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 20px; padding: 18px 0; border-block: 1px solid #e5eaf0; font-size: 14px; }
+    .pay-meta span:nth-child(odd) { color: #64748b; }
+    .pay-meta span:nth-child(even) { text-align: right; font-weight: 700; overflow-wrap: anywhere; }
+    .pay-alert { padding: 14px 16px; border-radius: 4px; margin: 16px 0; font-size: 14px; }
+    .pay-demo { background: #fff7df; border: 1px solid #e8c66d; color: #62480c; }
+    .pay-success { background: #edf8f1; border: 1px solid #a9d8b8; color: #245c35; }
+    .pay-wait { background: #eef4fa; border: 1px solid #cfdeed; color: #28466a; }
+    .pay-error { background: #fff0ef; border: 1px solid #e8b5b1; color: #842d27; }
+    .pay-action { min-height: 44px; background: var(--pay-navy); color: #fff; border: 0; border-radius: 4px; padding: 10px 18px; font-weight: 700; }
+    .pay-action:hover { background: #1b457f; color: #fff; }
+    @media (max-width: 520px) { .pay-main { margin-top: 24px; } .pay-panel { padding: 20px; } .pay-panel h1 { font-size: 22px; } }
+  </style>
+</head>
+<body>
+  <header class="pay-header">
+    <div class="container pay-header-inner">
+      <a class="pay-brand" href="/">
+        <img src="{% static 'school_site/images/school-crest.webp' %}" alt="">
+        <span><strong>NGUNDU HALT</strong><span>GOVERNMENT HIGH SCHOOL</span></span>
+      </a>
+      <a href="/" class="small fw-bold text-decoration-none">School website</a>
+    </div>
+  </header>
+  <main class="pay-main">
+    <section class="pay-panel">
+      <h1>Payment status</h1>
+      <div class="pay-meta">
+        <span>Reference</span><span>{{ attempt.reference }}</span>
+        <span>Term</span><span>{{ attempt.term }}</span>
+        <span>Amount</span><span>{{ attempt.currency }} {{ attempt.amount|floatformat:2 }}</span>
+        <span>Status</span><span>{{ attempt.get_status_display }}</span>
+      </div>
+
+      {% if attempt.status == "PAID" %}
+      <div class="pay-alert pay-success">Paynow confirmed this EcoCash payment. The payment has been added to the school fee ledger.</div>
+      {% elif attempt.status == "DEMO" %}
+      <div class="pay-alert pay-demo"><strong>Demo only:</strong> no money moved and the fee ledger will not change. Use the button only to test the confirmation screen.</div>
+      <form method="post">{% csrf_token %}<button class="pay-action" type="submit">Simulate a successful response</button></form>
+      {% elif attempt.status == "DEMO_PAID" %}
+      <div class="pay-alert pay-demo"><strong>Demo completed.</strong> This is not a real payment and has not been recorded against school fees.</div>
+      {% elif attempt.status == "FAILED" %}
+      <div class="pay-alert pay-error">This EcoCash request was not completed. You can start a new payment from the checkout page.</div>
+      {% else %}
+      <div class="pay-alert pay-wait">{{ instructions|default:"Approve the EcoCash prompt on the payer's phone, then check the status here." }}</div>
+      <form method="post">{% csrf_token %}<button class="pay-action" type="submit">Check payment status</button></form>
+      {% endif %}
+      <p class="mt-4 mb-0"><a href="{% url 'fees:ecocash_checkout' %}">Return to fee checkout</a></p>
+    </section>
+  </main>
+</body>
+</html>

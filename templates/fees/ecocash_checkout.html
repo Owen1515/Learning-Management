@@ -1,0 +1,81 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#112e62">
+  <title>Pay School Fees | Ngundu Halt Government High School</title>
+  <link rel="icon" type="image/webp" href="{% static 'school_site/images/school-crest.webp' %}">
+  <link rel="stylesheet" href="{% static 'school_site/vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'school_site/css/styles.css' %}">
+  <style>
+    :root { --pay-navy: #112e62; --pay-gold: #d3a640; --pay-ink: #203047; }
+    body { background: #f3f5f7; color: var(--pay-ink); }
+    .pay-header { background: #fff; border-bottom: 3px solid var(--pay-gold); }
+    .pay-header-inner { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .pay-brand { display: flex; align-items: center; gap: 12px; color: var(--pay-navy); text-decoration: none; }
+    .pay-brand img { width: 48px; height: 48px; object-fit: contain; }
+    .pay-brand strong { display: block; font-size: 15px; letter-spacing: .04em; }
+    .pay-brand span { display: block; font-size: 10px; font-weight: 700; color: #64748b; }
+    .pay-main { width: min(100% - 32px, 760px); margin: 42px auto 64px; }
+    .pay-heading { margin-bottom: 22px; }
+    .pay-heading p { color: #64748b; margin: 0; }
+    .pay-panel { background: #fff; border: 1px solid #dfe5ec; border-radius: 6px; box-shadow: 0 8px 28px rgba(17,46,98,.07); padding: 28px; }
+    .pay-panel h1 { color: var(--pay-navy); font-size: 26px; font-weight: 800; margin: 0 0 8px; }
+    .pay-label { display: block; font-size: 12px; font-weight: 700; margin: 16px 0 6px; }
+    .pay-panel input, .pay-panel select { width: 100%; min-height: 44px; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; }
+    .pay-panel input:focus, .pay-panel select:focus { outline: 3px solid rgba(211,166,64,.25); border-color: var(--pay-gold); }
+    .pay-action { min-height: 46px; background: var(--pay-navy); color: #fff; border: 0; border-radius: 4px; padding: 10px 18px; font-weight: 700; }
+    .pay-action:hover { background: #1b457f; color: #fff; }
+    .pay-alert { padding: 13px 15px; border-radius: 4px; margin: 16px 0; font-size: 13px; }
+    .pay-demo { background: #fff7df; border: 1px solid #e8c66d; color: #62480c; }
+    .pay-error { background: #fff0ef; border: 1px solid #e8b5b1; color: #842d27; }
+    .pay-info { background: #eef4fa; border: 1px solid #cfdeed; color: #28466a; }
+    .pay-recipient { border-top: 1px solid #e5eaf0; margin-top: 20px; padding-top: 16px; font-size: 13px; }
+    .pay-footer { color: #718096; font-size: 12px; text-align: center; margin-top: 22px; }
+    @media (max-width: 520px) { .pay-main { margin-top: 24px; } .pay-panel { padding: 20px; } .pay-panel h1 { font-size: 22px; } }
+  </style>
+</head>
+<body>
+  <header class="pay-header">
+    <div class="container pay-header-inner">
+      <a class="pay-brand" href="/">
+        <img src="{% static 'school_site/images/school-crest.webp' %}" alt="">
+        <span><strong>NGUNDU HALT</strong><span>GOVERNMENT HIGH SCHOOL</span></span>
+      </a>
+      <a href="/" class="small fw-bold text-decoration-none">School website</a>
+    </div>
+  </header>
+  <main class="pay-main">
+    <div class="pay-heading"><p>Secure school-fee checkout</p></div>
+    <section class="pay-panel">
+      <h1>Pay fees with EcoCash</h1>
+      <p class="text-secondary mb-3">Verify the learner using the student number and guardian phone registered with the school.</p>
+
+      {% if demo_mode %}
+      <div class="pay-alert pay-demo"><strong>Demo mode:</strong> this is a payment-flow test only. No EcoCash request is sent, no money moves, and simulated payments are not added to the school fee ledger.</div>
+      <div class="pay-recipient"><strong>Configured display recipient:</strong> {{ receiver_name }} · {{ receiver_phone }}<br><span class="text-secondary">Display only. Live settlement must be configured on the school's Paynow merchant account.</span></div>
+      {% elif not gateway_configured %}
+      <div class="pay-alert pay-info">Online EcoCash payments are not active yet. The school must configure its Paynow merchant integration before accepting real payments.</div>
+      {% endif %}
+
+      {% for error in errors %}<div class="pay-alert pay-error">{{ error }}</div>{% endfor %}
+      {% if form.non_field_errors %}<div class="pay-alert pay-error">{{ form.non_field_errors }}</div>{% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <fieldset {% if not demo_mode and not gateway_configured %}disabled{% endif %}>
+          {% for field in form %}
+          <label class="pay-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+          {% endfor %}
+          <button class="pay-action w-100 mt-4" type="submit">{% if demo_mode %}Start demo payment{% else %}Send EcoCash prompt{% endif %}</button>
+        </fieldset>
+      </form>
+    </section>
+    <p class="pay-footer">Only published USD fees are accepted through this EcoCash checkout. For account assistance, contact the school office.</p>
+  </main>
+</body>
+</html>

@@ -79,3 +79,46 @@ class FeePayment(models.Model):
 
     def __str__(self):
         return f"{self.student} – {self.term} – {self.currency} {self.amount}"
+
+
+class EcoCashPaymentAttempt(models.Model):
+    STATUS_CHOICES = [
+        ("PENDING", "Pending"),
+        ("PAID", "Paid"),
+        ("FAILED", "Failed"),
+        ("DEMO", "Demo pending"),
+        ("DEMO_PAID", "Demo complete (not paid)"),
+    ]
+
+    student = models.ForeignKey(
+        StudentProfile,
+        on_delete=models.CASCADE,
+        related_name="ecocash_attempts",
+    )
+    term = models.ForeignKey(
+        Term,
+        on_delete=models.CASCADE,
+        related_name="ecocash_attempts",
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES)
+    payer_phone = models.CharField(max_length=20)
+    payer_email = models.EmailField(blank=True)
+    reference = models.CharField(max_length=32, unique=True)
+    poll_url = models.URLField(max_length=500, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="PENDING")
+    fee_payment = models.OneToOneField(
+        FeePayment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ecocash_attempt",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.reference} - {self.status}"
